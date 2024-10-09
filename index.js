@@ -30,6 +30,7 @@ app.use(
             "http://localhost:5173",
             "http://localhost:5174",
             "https://saas-crm-nine.vercel.app",
+            "https://sass-crm-frontend.vercel.app"
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
@@ -42,6 +43,7 @@ app.use(
             "http://localhost:5173",
             "http://localhost:5174",
             "https://saas-crm-nine.vercel.app",
+            "https://sass-crm-frontend.vercel.app"
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
