@@ -77,6 +77,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
         records: {
           $push: {
+            _id: "$_id",
             firstName: "$firstName",
             lastName: "$lastName",
             phone: "$phone",
