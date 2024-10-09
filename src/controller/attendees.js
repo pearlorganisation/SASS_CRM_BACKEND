@@ -4,6 +4,12 @@ import usersModel from "../models/users.js";
 
 const ROLES = JSON.parse(process.env.ROLES);
 
+const addFilter = (pipeline, key, value, condition = null) => {
+  if (value !== undefined && value !== null) {
+    pipeline[key] = condition ? condition(value) : value;
+  }
+};
+
 export const addAttendees = asyncHandler(async (req, res) => {
   const data = req.body;
   const csvName = req?.body[0].csvName;
@@ -24,11 +30,36 @@ export const addAttendees = asyncHandler(async (req, res) => {
 export const getAttendees = asyncHandler(async (req, res) => {
   let pipeline = {};
 
+  //filtering
   if (req?.query) {
-    pipeline = req?.query;
+    const { email, gender, location, minAge, maxAge, phone } = req?.query;
+
+    if (email) {
+      addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
+    }
+
+    if (phone) {
+      addFilter(pipeline, "phone", phone);
+    }
+
+    if (gender) {
+      addFilter(pipeline, "gender", gender);
+    }
+
+    if (location) {
+      addFilter(pipeline, "location", {
+        $regex: new RegExp(`^${email}$`, "i"),
+      });
+    }
+
+    if (minAge || maxAge) {
+      pipeline.age = {};
+      if (minAge) pipeline.age.$gte = Number(minAge);
+      if (maxAge) pipeline.age.$lte = Number(maxAge);
+    }
   }
 
-  if (req?.body?.csvId) pipeline = { csvId: req?.body?.csvId };
+  if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
 
   const page = req?.params?.page || 1;
   const limit = 25;
@@ -41,7 +72,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
-    { $sort: { email: 1 } }, // Sort by attendee name in ascending order (1 for ascending, -1 for descending)
+    { $sort: { email: 1 } },
     { $skip: skip },
     { $limit: limit },
     {
@@ -73,8 +104,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     { $project: { employeeData: 0 } }, // Exclude employeeData array from result
     {
       $group: {
-        _id: "$email", // Group by email
-
+        _id: "$email",
         records: {
           $push: {
             _id: "$_id",
@@ -102,6 +132,78 @@ export const getAttendees = asyncHandler(async (req, res) => {
     totalPages,
     result,
   });
+});
+
+export const getAttendee = asyncHandler(async (req, res) => {
+  const { email, recordType } = req?.query;
+  if (!email && !recordType) {
+    res.status(500).send({
+      status: false,
+      message: "Attendee E-Mail/recordType not provided",
+    });
+  }
+
+  let pipeline = {
+    email: { $regex: new RegExp(`^${email}$`, "i") }, // Case-insensitive email search
+    recordType: recordType,
+  };
+
+  // Aggregate pipeline to join user data and match on email and recordType
+  const result = await attendeesModel.aggregate([
+    { $match: pipeline },
+    {
+      $lookup: {
+        from: "users", // Collection name for users
+        let: { attendeeEmail: "$email", attendeeRecordType: "$recordType" }, // Fields from attendee
+        pipeline: [
+          { $unwind: "$assignments" }, // Unwind assignments array
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$assignments.email", "$$attendeeEmail"] },
+                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] },
+                ],
+              },
+            },
+          },
+          { $project: { userName: 1 } }, // Project only userName
+        ],
+        as: "employeeData", // Output field
+      },
+    },
+    {
+      $addFields: {
+        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] }, // Extract employee name
+      },
+    },
+    { $project: { employeeData: 0 } }, // Exclude employeeData array from result
+    {
+      $group: {
+        _id: "$email",
+        records: {
+          $push: {
+            _id: "$_id",
+            firstName: "$firstName",
+            lastName: "$lastName",
+            phone: "$phone",
+            employeeName: "$employeeName",
+            csvName: "$csvName",
+            csvId: "$csvId",
+            recordType: "$recordType",
+            date: "$date",
+            timeInSession: "$timeInSession",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+          },
+        },
+      },
+    },
+  ]);
+
+  res
+    .status(200)
+    .json({ status: true, message: "data found successfully", data: result });
 });
 
 export const getCsvData = asyncHandler(async (req, res) => {
