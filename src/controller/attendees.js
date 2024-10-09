@@ -33,7 +33,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const page = req?.params?.page || 1;
   const limit = 25;
   const skip = (page - 1) * limit;
-  let totalPages = 0;
+  let totalPages = 1;
 
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
   totalPages = Math.ceil(totalAttendees / limit);
@@ -41,6 +41,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
+    { $sort: { email: 1 } }, // Sort by attendee name in ascending order (1 for ascending, -1 for descending)
     { $skip: skip },
     { $limit: limit },
     {
@@ -54,22 +55,22 @@ export const getAttendees = asyncHandler(async (req, res) => {
               $expr: {
                 $and: [
                   { $eq: ["$assignments.email", "$$attendeeEmail"] },
-                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] }
-                ]
-              }
-            }
+                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] },
+                ],
+              },
+            },
           },
-          { $project: { userName: 1 } } // Project only userName
+          { $project: { userName: 1 } }, // Project only userName
         ],
         as: "employeeData", // Output field
-      }
+      },
     },
     {
       $addFields: {
-        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] } // Extract employee name
-      }
+        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] }, // Extract employee name
+      },
     },
-    { $project: { employeeData: 0 } } // Exclude employeeData array from result
+    { $project: { employeeData: 0 } }, // Exclude employeeData array from result
   ]);
 
   res.status(200).json({
@@ -245,7 +246,3 @@ export const assignAttendees = asyncHandler(async (req, res) => {
     failedAssignments,
   });
 });
-
-
-
-
