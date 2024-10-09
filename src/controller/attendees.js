@@ -38,7 +38,39 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
   totalPages = Math.ceil(totalAttendees / limit);
 
-  const result = await attendeesModel.find(pipeline).skip(skip).limit(limit);
+  // Aggregate pipeline to join user data and match on email and recordType
+  const result = await attendeesModel.aggregate([
+    { $match: pipeline },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "users", // Collection name for users
+        let: { attendeeEmail: "$email", attendeeRecordType: "$recordType" }, // Fields from attendee
+        pipeline: [
+          { $unwind: "$assignments" }, // Unwind assignments array
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$assignments.email", "$$attendeeEmail"] },
+                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] }
+                ]
+              }
+            }
+          },
+          { $project: { userName: 1 } } // Project only userName
+        ],
+        as: "employeeData", // Output field
+      }
+    },
+    {
+      $addFields: {
+        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] } // Extract employee name
+      }
+    },
+    { $project: { employeeData: 0 } } // Exclude employeeData array from result
+  ]);
 
   res.status(200).json({
     status: true,
@@ -183,8 +215,6 @@ export const assignAttendees = asyncHandler(async (req, res) => {
         break;
     }
 
-
-
     if (roleAllowed) {
       // Assign the attendee to the user
       const result = await usersModel.findByIdAndUpdate(
@@ -215,3 +245,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
     failedAssignments,
   });
 });
+
+
+
+
