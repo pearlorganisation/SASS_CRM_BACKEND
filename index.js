@@ -13,7 +13,6 @@ import productRouter from "./src/routes/product.js";
 import employeeRouter from "./src/routes/employee.js";
 import globalDataRouter from "./src/routes/globalData.js";
 
-
 dotenv.config();
 
 const PORT = process.env.PORT || 8000;
@@ -30,7 +29,7 @@ app.use(
             "http://localhost:5173",
             "http://localhost:5174",
             "https://saas-crm-nine.vercel.app",
-            "https://sass-crm-frontend.vercel.app"
+            "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
@@ -43,7 +42,7 @@ app.use(
             "http://localhost:5173",
             "http://localhost:5174",
             "https://saas-crm-nine.vercel.app",
-            "https://sass-crm-frontend.vercel.app"
+            "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
@@ -58,13 +57,12 @@ app.use(
 // routes
 app.use("/api/v1/attendee", attendeesRouter);
 app.use("/api/v1/product", productRouter);
-app.use("/api/v1/roles", rolesRouter)
-app.use("/api/v1/auth", authRouter)
-app.use("/api/v1/users", usersRouter)
-app.use("/api/v1/plans", planRouter)
-app.use("/api/v1/employee", employeeRouter)
-app.use("/api/v1/globalData", globalDataRouter)
-
+app.use("/api/v1/roles", rolesRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/plans", planRouter);
+app.use("/api/v1/employee", employeeRouter);
+app.use("/api/v1/globalData", globalDataRouter);
 
 app.get("/", (req, res) => {
   res.send("Server is running!");
@@ -72,6 +70,6 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server Listening on port ${PORT}`);
-  syncIndexes()
+  syncIndexes();
   mongoConnect();
 });
