@@ -71,6 +71,27 @@ export const getAttendees = asyncHandler(async (req, res) => {
       },
     },
     { $project: { employeeData: 0 } }, // Exclude employeeData array from result
+    {
+      $group: {
+        _id: "$email", // Group by email
+
+        records: {
+          $push: {
+            firstName: "$firstName",
+            lastName: "$lastName",
+            phone: "$phone",
+            employeeName: "$employeeName",
+            csvName: "$csvName",
+            csvId: "$csvId",
+            recordType: "$recordType",
+            date: "$date",
+            timeInSession: "$timeInSession",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+          },
+        },
+      },
+    },
   ]);
 
   res.status(200).json({
