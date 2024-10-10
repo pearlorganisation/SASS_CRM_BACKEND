@@ -264,6 +264,7 @@ export const deleteCsvData = asyncHandler(async (req, res) => {
 
 export const assignAttendees = asyncHandler(async (req, res) => {
   const { userId, attendees } = req?.body; // Assuming attendees is an array of attendee objects with attendeeId and recordType
+  console.log(attendees)
 
   if (req?.role !== ROLES.ADMIN) {
     res.status(500).json({
@@ -296,14 +297,31 @@ export const assignAttendees = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "User not found" });
   }
 
+  //type of employee role
+  let employeeRole;
+  switch (String(user?.role)) {
+    case String(ROLES?.EMPLOYEE_SALES):
+      employeeRole = "sales";
+      break;
+    case String(ROLES?.EMPLOYEE_REMINDER):
+      employeeRole = "reminder";
+      break;
+    default:
+      employeeRole = null;
+      break;
+  }
+
+  if(!employeeRole){
+    res.status(500).json({status: false, message: 'Employee role not Sales or Reminder'})
+  }
+
   const assignedAttendees = { userId, assignments: [] };
   const failedAssignments = [];
-
   for (const attendeeData of attendees) {
     const { attendeeId } = attendeeData;
 
     // Checking if attendee exists in DB
-    const attendee = await attendeesModel.findOne({ _id: attendeeId });
+    const attendee = await attendeesModel.findOne({ email: attendeeId, recordType: employeeRole });
     if (!attendee) {
       failedAssignments.push({
         attendeeId,
@@ -317,6 +335,8 @@ export const assignAttendees = asyncHandler(async (req, res) => {
       "assignments.email": attendee?.email,
       "assignments.recordType": attendee?.recordType,
     });
+
+    
 
     if (isAssigned) {
       failedAssignments.push({
@@ -342,6 +362,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 
     if (roleAllowed) {
       // Assign the attendee to the user
+   
       const result = await usersModel.findByIdAndUpdate(
         userId,
         {
@@ -350,10 +371,12 @@ export const assignAttendees = asyncHandler(async (req, res) => {
               email: attendee?.email,
               recordType: attendee?.recordType,
             },
+            $slice: -1, // Returns only the last ent
           },
         },
-        { new: true }
+        { new: true, fields: { "assignments": { $slice: -1 } } }
       );
+
       assignedAttendees.assignments = result?.assignments;
     } else {
       failedAssignments.push({
