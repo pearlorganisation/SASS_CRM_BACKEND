@@ -52,8 +52,8 @@ export const getAttendees = asyncHandler(async (req, res) => {
   addFilter(pipeline, "adminId", adminId);
 
   //filtering
-
-  const { email, gender, location, minAge, maxAge, phone } = req?.query;
+  if (req?.query) {
+    const { email, gender, location, ageRangeMin, ageRangeMax, phone } = req?.query;
 
   if (email) {
     addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
@@ -66,17 +66,15 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (gender) {
     addFilter(pipeline, "gender", gender);
   }
-
   if (location) {
-    addFilter(pipeline, "location", {
-      $regex: new RegExp(`^${email}$`, "i"),
-    });
+    addFilter(pipeline, "location", location);
   }
 
-  if (minAge || maxAge) {
-    pipeline.age = {};
-    if (minAge) pipeline.age.$gte = Number(minAge);
-    if (maxAge) pipeline.age.$lte = Number(maxAge);
+    if (ageRangeMin || ageRangeMax) {
+      pipeline.age = {};
+      if (ageRangeMin) pipeline.age.$gte = Number(ageRangeMin);
+      if (ageRangeMax) pipeline.age.$lte = Number(ageRangeMax);
+    }
   }
 
   if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
