@@ -32,7 +32,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   //filtering
   if (req?.query) {
-    const { email, gender, location, minAge, maxAge, phone } = req?.query;
+    const { email, gender, location, ageRangeMin, ageRangeMax, phone } = req?.query;
 
     if (email) {
       addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
@@ -52,10 +52,10 @@ export const getAttendees = asyncHandler(async (req, res) => {
       });
     }
 
-    if (minAge || maxAge) {
+    if (ageRangeMin || ageRangeMax) {
       pipeline.age = {};
-      if (minAge) pipeline.age.$gte = Number(minAge);
-      if (maxAge) pipeline.age.$lte = Number(maxAge);
+      if (ageRangeMin) pipeline.age.$gte = Number(ageRangeMin);
+      if (ageRangeMax) pipeline.age.$lte = Number(ageRangeMax);
     }
   }
 
