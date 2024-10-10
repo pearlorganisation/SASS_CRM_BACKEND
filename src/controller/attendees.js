@@ -28,29 +28,30 @@ export const addAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAttendees = asyncHandler(async (req, res) => {
-  let pipeline = {};
+  let { recordType } = req?.query;
+
+  if (!recordType) recordType = "sales";
+
+  let pipeline = { recordType };
 
   //filtering
   if (req?.query) {
     const { email, gender, location, ageRangeMin, ageRangeMax, phone } = req?.query;
 
-    if (email) {
-      addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
-    }
+  if (email) {
+    addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
+  }
 
-    if (phone) {
-      addFilter(pipeline, "phone", phone);
-    }
+  if (phone) {
+    addFilter(pipeline, "phone", phone);
+  }
 
-    if (gender) {
-      addFilter(pipeline, "gender", gender);
-    }
-
-    if (location) {
-      addFilter(pipeline, "location", {
-        $regex: new RegExp(`^${email}$`, "i"),
-      });
-    }
+  if (gender) {
+    addFilter(pipeline, "gender", gender);
+  }
+  if (location) {
+    addFilter(pipeline, "location", location);
+  }
 
     if (ageRangeMin || ageRangeMax) {
       pipeline.age = {};
@@ -102,6 +103,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
       },
     },
     { $project: { employeeData: 0 } }, // Exclude employeeData array from result
+
     {
       $group: {
         _id: "$email",
@@ -123,6 +125,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
         },
       },
     },
+    { $sort: { _id: 1 } },
   ]);
 
   res.status(200).json({
@@ -264,7 +267,7 @@ export const deleteCsvData = asyncHandler(async (req, res) => {
 
 export const assignAttendees = asyncHandler(async (req, res) => {
   const { userId, attendees } = req?.body; // Assuming attendees is an array of attendee objects with attendeeId and recordType
-  console.log(attendees)
+  console.log(attendees);
 
   if (req?.role !== ROLES.ADMIN) {
     res.status(500).json({
@@ -311,8 +314,10 @@ export const assignAttendees = asyncHandler(async (req, res) => {
       break;
   }
 
-  if(!employeeRole){
-    res.status(500).json({status: false, message: 'Employee role not Sales or Reminder'})
+  if (!employeeRole) {
+    res
+      .status(500)
+      .json({ status: false, message: "Employee role not Sales or Reminder" });
   }
 
   const assignedAttendees = { userId, assignments: [] };
@@ -321,7 +326,10 @@ export const assignAttendees = asyncHandler(async (req, res) => {
     const { attendeeId } = attendeeData;
 
     // Checking if attendee exists in DB
-    const attendee = await attendeesModel.findOne({ email: attendeeId, recordType: employeeRole });
+    const attendee = await attendeesModel.findOne({
+      email: attendeeId,
+      recordType: employeeRole,
+    });
     if (!attendee) {
       failedAssignments.push({
         attendeeId,
@@ -335,8 +343,6 @@ export const assignAttendees = asyncHandler(async (req, res) => {
       "assignments.email": attendee?.email,
       "assignments.recordType": attendee?.recordType,
     });
-
-    
 
     if (isAssigned) {
       failedAssignments.push({
@@ -362,7 +368,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 
     if (roleAllowed) {
       // Assign the attendee to the user
-   
+
       const result = await usersModel.findByIdAndUpdate(
         userId,
         {
@@ -374,7 +380,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
             $slice: -1, // Returns only the last ent
           },
         },
-        { new: true, fields: { "assignments": { $slice: -1 } } }
+        { new: true, fields: { assignments: { $slice: -1 } } }
       );
 
       assignedAttendees.assignments = result?.assignments;
