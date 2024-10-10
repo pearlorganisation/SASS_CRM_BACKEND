@@ -1,4 +1,5 @@
 import { productModel } from "../models/products.js";
+import usersModel from "../models/users.js";
 import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
 
 export const addProduct = asyncHandler(async (req, res) => {

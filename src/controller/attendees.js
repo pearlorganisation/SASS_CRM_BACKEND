@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
 import attendeesModel from "../models/attendees.js";
 import usersModel from "../models/users.js";
+import mongoose from "mongoose";
 
 const ROLES = JSON.parse(process.env.ROLES);
 
@@ -49,8 +50,9 @@ export const getAttendees = asyncHandler(async (req, res) => {
     adminId = user?.adminId;
   }
 
-  addFilter(pipeline, "adminId", adminId);
+  addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(adminId));
 
+  
   //filtering
   if (req?.query) {
     const { email, gender, location, ageRangeMin, ageRangeMax, phone } = req?.query;
@@ -88,6 +90,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
   totalPages = Math.ceil(totalAttendees / limit);
 
+  console.log(pipeline)
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
@@ -146,9 +149,18 @@ export const getAttendees = asyncHandler(async (req, res) => {
     { $sort: { _id: 1 } },
   ]);
 
-  res.status(200).json({
+  if(result.length > 0){
+    return res.status(200).json({
+      status: true,
+      message: "Attendees data found successfully",
+      page,
+      totalPages,
+      result,
+    });
+  }
+  res.status(500).json({
     status: true,
-    message: "Attendees data found successfully",
+    message: "No data found.",
     page,
     totalPages,
     result,

@@ -54,6 +54,11 @@ const attendeeSchema = new mongoose.Schema(
       type: String,
       enums: ["male", "female", "others"],
     },
+    adminId: {
+      type: mongoose.Types.ObjectId,
+      ref: "users",
+      required: [true, "adminId is required"],
+    },
   },
   { timestamps: true }
 );
