@@ -269,6 +269,33 @@ export const createEmployee = asyncHandler(async (req, res) => {
   }
 });
 
+export const deleteEmployee = asyncHandler(async (req, res) => {
+  const {employeeId } = req?.query;
+
+
+  if (!employeeId) {
+    res.status(500).json({ status: false, message: "Incomplete form inputs" });
+  }
+
+  const adminId = req?.id;
+
+  if (adminId && req?.role === ROLES.ADMIN) {
+    role = ROLES[`${selectedRole}`];
+  } else {
+    res.status(500).json({status: false, message: "Only Admin level roles are allowed to create employees."})
+  }
+
+  const isMyAdmin = await usersModel.findOne({ _id: userId, adminId: adminId });
+
+  if (!isMyAdmin) {
+    return res.status(500).json({
+      status: false,
+      message: "Only employee's admin is allowed to assign attendees",
+    });
+  }
+
+})
+
 // @desc - to fetch the users data
 // @route - POST /auth/logout
 // @access - PUBLIC

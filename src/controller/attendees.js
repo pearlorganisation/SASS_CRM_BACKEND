@@ -11,6 +11,13 @@ const addFilter = (pipeline, key, value, condition = null) => {
 };
 
 export const addAttendees = asyncHandler(async (req, res) => {
+  if (req?.role !== ROLES.ADMIN) {
+    return res.status(500).json({
+      status: false,
+      message: "Only admin is allowed to assign attendees",
+    });
+  }
+
   const data = req.body;
   const csvName = req?.body[0].csvName;
   const date = new Date();
@@ -18,6 +25,7 @@ export const addAttendees = asyncHandler(async (req, res) => {
 
   data.forEach((e) => {
     e.csvId = `${csvName}${randomString}`;
+    e.adminId = req.id;
   });
 
   const result = await attendeesModel.insertMany(data);
@@ -33,6 +41,15 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (!recordType) recordType = "sales";
 
   let pipeline = { recordType };
+
+  let adminId = req.id;
+
+  if ([ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
+    const user = await usersModel.findOne({ _id: req?.id });
+    adminId = user?.adminId;
+  }
+
+  addFilter(pipeline, "adminId", adminId);
 
   //filtering
 
@@ -64,6 +81,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
 
+  //pagination
   const page = req?.params?.page || 1;
   const limit = 25;
   const skip = (page - 1) * limit;
