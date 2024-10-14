@@ -158,7 +158,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
       result,
     });
   }
-  res.status(500).json({
+  res.status(200).json({
     status: true,
     message: "No data found.",
     page,
