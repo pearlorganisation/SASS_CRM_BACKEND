@@ -24,5 +24,10 @@ export const getProducts = asyncHandler(async (req, res) => {
     adminId: new mongoose.Types.ObjectId(adminId),
   });
 
-  res.status(200).json({ status: true, data });
+  if(data?.length > 0){
+    res.status(200).json({ status: true, data });
+  } else {
+    res.status(500).json({status: false, message: 'No products found'})
+  }
+
 });

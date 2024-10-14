@@ -1,5 +1,5 @@
 import express from "express";
-import { addAttendees, assignAttendees, deleteCsvData, getAttendee, getAttendees, getCsvData } from "../controller/attendees.js";
+import { addAttendees, assignAttendees, deleteCsvData, getAssignments, getAttendee, getAttendees, getCsvData } from "../controller/attendees.js";
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware.js";
 
 const attendeesRouter = express.Router();
@@ -8,6 +8,6 @@ attendeesRouter.route("/:page?").get(verifyTokenMiddleware, getAttendees).post(v
 attendeesRouter.route("/csvData/:page?").get(verifyTokenMiddleware, getCsvData)
 attendeesRouter.route("/:csvId").delete(verifyTokenMiddleware,deleteCsvData)
 attendeesRouter.route("/assign").patch(verifyTokenMiddleware, assignAttendees)
-
+attendeesRouter.route("/employee/assignments").get(verifyTokenMiddleware, getAssignments)
 
 export default attendeesRouter;
