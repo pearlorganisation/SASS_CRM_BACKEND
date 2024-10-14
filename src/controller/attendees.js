@@ -52,25 +52,25 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(adminId));
 
-  
   //filtering
   if (req?.query) {
-    const { email, gender, location, ageRangeMin, ageRangeMax, phone } = req?.query;
+    const { email, gender, location, ageRangeMin, ageRangeMax, phone } =
+      req?.query;
 
-  if (email) {
-    addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
-  }
+    if (email) {
+      addFilter(pipeline, "email", { $regex: new RegExp(`^${email}$`, "i") });
+    }
 
-  if (phone) {
-    addFilter(pipeline, "phone", phone);
-  }
+    if (phone) {
+      addFilter(pipeline, "phone", phone);
+    }
 
-  if (gender) {
-    addFilter(pipeline, "gender", gender);
-  }
-  if (location) {
-    addFilter(pipeline, "location", location);
-  }
+    if (gender) {
+      addFilter(pipeline, "gender", gender);
+    }
+    if (location) {
+      addFilter(pipeline, "location", location);
+    }
 
     if (ageRangeMin || ageRangeMax) {
       pipeline.age = {};
@@ -90,7 +90,6 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
   totalPages = Math.ceil(totalAttendees / limit);
 
-  console.log(pipeline)
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
@@ -149,7 +148,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     { $sort: { _id: 1 } },
   ]);
 
-  if(result.length > 0){
+  if (result.length > 0) {
     return res.status(200).json({
       status: true,
       message: "Attendees data found successfully",
@@ -428,4 +427,52 @@ export const assignAttendees = asyncHandler(async (req, res) => {
     assignedAttendees,
     failedAssignments,
   });
+});
+
+export const getAssignments = asyncHandler(async (req, res) => {
+  if (![ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
+    return res
+      .status(500)
+      .json({ status: false, message: "Not logged in as an employee" });
+  }
+
+  const employeeId = new mongoose.Types.ObjectId(req?.id);
+
+  const result = await usersModel.aggregate([
+    { $match: { _id: employeeId } },
+    { $unwind: "$assignments" }, // Unwind the assignments array
+    {
+      $lookup: {
+        from: "attendees",
+        let: {
+          attendeeEmail: "$assignments.email",
+          attendeeRecordType: "$assignments.recordType",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$email", "$$attendeeEmail"] },
+                  { $eq: ["$recordType", "$$attendeeRecordType"] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "assignmentDetails", // Rename this to avoid confusion
+      },
+    },
+    {
+      $group: {
+        _id: "$_id", // Group back to user
+        email: { $first: "$email" },
+        userName: { $first: "$userName" },
+        phone: { $first: "$phone" },
+        assignments: { $push: { $arrayElemAt: ["$assignmentDetails", 0] } }, // Get first matching assignment details
+      },
+    },
+  ]);
+
+  res.status(200).json({ status: true, data: result });
 });

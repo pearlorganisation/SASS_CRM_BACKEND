@@ -1,6 +1,9 @@
+import mongoose from "mongoose";
 import { productModel } from "../models/products.js";
 import usersModel from "../models/users.js";
 import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
+
+const ROLES = JSON.parse(process.env.ROLES);
 
 export const addProduct = asyncHandler(async (req, res) => {
   await productModel.create(req?.body);
@@ -9,29 +12,22 @@ export const addProduct = asyncHandler(async (req, res) => {
 
 export const getProducts = asyncHandler(async (req, res) => {
   const id = req?.id;
-
-  // if (
-  //   id &&
-  //   [ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)
-  // ) {
-  //   role = ROLES[`${selectedRole}`];
-  // } else {
-  //   res.status(500).json({
-  //     status: false,
-  //     message: "Only Admin level roles are allowed to create employees.",
-  //   });
-  // }
-
-  const isMyAdmin = await usersModel.findOne({ _id: userId, adminId: adminId });
-
-  if (!isMyAdmin) {
-    return res.status(500).json({
-      status: false,
-      message: "Only employee's admin is allowed to assign attendees",
-    });
+  let adminId;
+  if ([ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
+    const user = await usersModel.findById(id);
+    adminId = user?.adminId;
+  } else {
+    adminId = id;
   }
 
-  const data = await productModel.find({ adminId: id });
+  const data = await productModel.find({
+    adminId: new mongoose.Types.ObjectId(adminId),
+  });
 
-  res.status(200).json({ status: true, data });
+  if(data?.length > 0){
+    res.status(200).json({ status: true, data });
+  } else {
+    res.status(500).json({status: false, message: 'No products found'})
+  }
+
 });
