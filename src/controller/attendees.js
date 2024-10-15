@@ -459,6 +459,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
               },
             },
           },
+          
         ],
         as: "assignmentDetails", // Rename this to avoid confusion
       },
@@ -472,6 +473,33 @@ export const getAssignments = asyncHandler(async (req, res) => {
         assignments: { $push: { $arrayElemAt: ["$assignmentDetails", 0] } }, // Get first matching assignment details
       },
     },
+    { $unwind: "$assignments" }, // Unwind the assignments array
+    
+    {
+      $group: {
+        _id: "$assignments.email",
+        records: {
+          $push: {
+            _id: "$assignments._id",
+            firstName: "$assignments.firstName",
+            lastName: "$assignments.lastName",
+            phone: "$assignments.phone",
+            employeeName: "$assignments.employeeName",
+            csvName: "$assignments.csvName",
+            csvId: "$assignments.csvId",
+            recordType: "$assignments.recordType",
+            date: "$assignments.date",
+            timeInSession: "$assignments.timeInSession",
+            createdAt: "$assignments.createdAt",
+            updatedAt: "$assignments.updatedAt",
+          },
+        },
+        
+      },
+   
+    },
+    {$sort: {_id: 1}}
+
   ]);
 
   res.status(200).json({ status: true, data: result });
