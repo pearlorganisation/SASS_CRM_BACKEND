@@ -82,8 +82,8 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
 
   //pagination
-  const page = req?.params?.page || 1;
-  const limit = 25;
+  const page = Number(req?.query?.page) || 1;
+  const limit = Number(req?.query?.limit) || 25;
   const skip = (page - 1) * limit;
   let totalPages = 1;
 
@@ -436,7 +436,13 @@ export const getAssignments = asyncHandler(async (req, res) => {
       .json({ status: false, message: "Not logged in as an employee" });
   }
 
-  const employeeId = new mongoose.Types.ObjectId(req?.id);
+  //pagination
+  const page = Number(req?.query?.page) || 1;
+  const limit = Number(req?.query?.limit) || 25;
+  const skip = (page - 1) * limit;
+  let totalPages = 1;
+
+  const employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
 
   const result = await usersModel.aggregate([
     { $match: { _id: employeeId } },
@@ -459,7 +465,6 @@ export const getAssignments = asyncHandler(async (req, res) => {
               },
             },
           },
-          
         ],
         as: "assignmentDetails", // Rename this to avoid confusion
       },
@@ -474,7 +479,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
       },
     },
     { $unwind: "$assignments" }, // Unwind the assignments array
-    
+
     {
       $group: {
         _id: "$assignments.email",
@@ -494,13 +499,25 @@ export const getAssignments = asyncHandler(async (req, res) => {
             updatedAt: "$assignments.updatedAt",
           },
         },
-        
       },
-   
     },
-    {$sort: {_id: 1}}
-
+    { $sort: { _id: 1 } },
+    {
+      $group: {
+        _id: null, // Group all results to calculate total count
+        totalCount: { $sum: { $size: "$records" } }, // Count total records
+        results: { $push: "$$ROOT" }, // Push all records into results array
+      },
+    },
+    { $project: { _id: 0, totalCount: 1, results: 1 } }, // Format the output
+    { $unwind: "$results" }, // Unwind to flatten results
+    { $skip: skip }, // Skip the first N results
+    { $limit: limit }, // Limit the results to N
   ]);
 
-  res.status(200).json({ status: true, data: result });
+  // Return the final output
+  totalPages = result.length > 0 ? Math.ceil(result[0].totalCount / limit) : 1;
+  const paginatedResults = result.map((item) => item.results);
+
+  res.status(200).json({ status: true, totalPages: totalPages, data: paginatedResults });
 });
