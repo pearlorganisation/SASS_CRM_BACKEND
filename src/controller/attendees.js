@@ -519,5 +519,12 @@ export const getAssignments = asyncHandler(async (req, res) => {
   totalPages = result.length > 0 ? Math.ceil(result[0].totalCount / limit) : 1;
   const paginatedResults = result.map((item) => item.results);
 
-  res.status(200).json({ status: true, totalPages: totalPages, data: paginatedResults });
+  res
+    .status(200)
+    .json({
+      status: true,
+      page,
+      totalPages: totalPages,
+      data: paginatedResults,
+    });
 });
