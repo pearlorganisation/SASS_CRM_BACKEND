@@ -90,7 +90,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
   totalPages = Math.ceil(totalAttendees / limit);
 
-  // Aggregate pipeline to join user data and match on email and recordType
+  // Aggregation pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
     { $sort: { email: 1 } },
@@ -124,6 +124,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     },
     { $project: { employeeData: 0 } }, // Exclude employeeData array from result
 
+    //grouping attendee records as per unique email
     {
       $group: {
         _id: "$email",
@@ -145,6 +146,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
         },
       },
     },
+    // sorting the data for _id which is email in ascending order..
     { $sort: { _id: 1 } },
   ]);
 
@@ -444,6 +446,8 @@ export const getAssignments = asyncHandler(async (req, res) => {
 
   const employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
 
+
+  // Aggregation to get assignments
   const result = await usersModel.aggregate([
     { $match: { _id: employeeId } },
     { $unwind: "$assignments" }, // Unwind the assignments array
@@ -466,7 +470,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
             },
           },
         ],
-        as: "assignmentDetails", // Rename this to avoid confusion
+        as: "assignments",
       },
     },
     {
@@ -475,11 +479,12 @@ export const getAssignments = asyncHandler(async (req, res) => {
         email: { $first: "$email" },
         userName: { $first: "$userName" },
         phone: { $first: "$phone" },
-        assignments: { $push: { $arrayElemAt: ["$assignmentDetails", 0] } }, // Get first matching assignment details
+        assignments: { $push: { $arrayElemAt: ["$assignments", 0] } }, // Getting first matching assignment
       },
     },
-    { $unwind: "$assignments" }, // Unwind the assignments array
+    { $unwind: "$assignments" }, // Unwind assignments array!? lesgooo!
 
+    // grouping the assignments just like we did in getting attendees becuz there are multiple for same email id! -_-
     {
       $group: {
         _id: "$assignments.email",
@@ -510,21 +515,19 @@ export const getAssignments = asyncHandler(async (req, res) => {
       },
     },
     { $project: { _id: 0, totalCount: 1, results: 1 } }, // Format the output
-    { $unwind: "$results" }, // Unwind to flatten results
-    { $skip: skip }, // Skip the first N results
-    { $limit: limit }, // Limit the results to N
+    { $unwind: "$results" },
+    { $skip: skip }, 
+    { $limit: limit },
   ]);
 
   // Return the final output
   totalPages = result.length > 0 ? Math.ceil(result[0].totalCount / limit) : 1;
   const paginatedResults = result.map((item) => item.results);
 
-  res
-    .status(200)
-    .json({
-      status: true,
-      page,
-      totalPages: totalPages,
-      data: paginatedResults,
-    });
+  res.status(200).json({
+    status: true,
+    page,
+    totalPages: totalPages,
+    data: paginatedResults,
+  });
 });
