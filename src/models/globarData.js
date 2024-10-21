@@ -5,6 +5,10 @@ const globalDataSchema = mongoose.Schema({
         type: [],
         required: true
     },
+    itemType: {
+        type: String,
+        required: true
+    },
     title:{
         type: String,
         required: true

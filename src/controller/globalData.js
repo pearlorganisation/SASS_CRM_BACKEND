@@ -30,14 +30,14 @@ export const getSidebarLinks = asyncHandler(async(req, res) => {
 
 export const addGlobalData = asyncHandler(async (req, res) => {
     try {
-        const { title, subTitle } = req.body;
+        const { title, subTitle, fileType } = req.body;
         let uploadedFileUrl = null;
 
-        if (!title) {
-            return res.status(400).json({ status: false, message: 'Title is required.' });
+        if (!title && !fileType) {
+            return res.status(400).json({ status: false, message: 'Missing required parameters.' });
         }
 
-        if (req?.files?.file && Array.isArray(req.files.file) && req.files.file[0]?.path) {
+        if (req?.files?.file && Array.isArray(req.files.file) && req.files.file.length > 0 && req.files.file[0]?.path) {
             console.log('Uploading image to Cloudinary...');
             const uploadResponse = await uploadOnCloudinary(req.files.file[0].path);
             if (uploadResponse) {
@@ -52,6 +52,7 @@ export const addGlobalData = asyncHandler(async (req, res) => {
             item: uploadedFileUrl,
             title: title.trim(), 
             subTitle: subTitle ? subTitle.trim() : undefined, 
+            itemType: fileType
         });
 
         const savedData = await newGlobalData.save();
@@ -72,6 +73,31 @@ export const addGlobalData = asyncHandler(async (req, res) => {
     }
 });
 
+export const getGlobalData = asyncHandler(async (req, res) => {
+    try {
+      const latestData = await globalDataModel.findOne().sort({ _id: -1 });
+  
+      if (!latestData) {
+        return res.status(404).json({
+          status: false,
+          message: "No global data found.",
+        });
+      }
+  
+      res.status(200).json({
+        status: true,
+        message: "Latest global data retrieved successfully.",
+        data: latestData,
+      });
+    } catch (error) {
+      console.error("Error in getGlobalData:", error);
+      res.status(500).json({
+        status: false,
+        message: "An error occurred while retrieving global data.",
+        error: error.message,
+      });
+    }
+  });
 
 
 
