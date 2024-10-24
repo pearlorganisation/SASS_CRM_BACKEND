@@ -4,7 +4,7 @@ import usersModel from "../models/users.js";
 const ROLES = JSON.parse(process.env.ROLES);
 
 export const getEmployees = asyncHandler(async (req, res) => {
-  const { adminId } = req?.query;
+  let { adminId } = req?.query;
 
   if (![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(req?.role)) {
     res.status(500).json({
