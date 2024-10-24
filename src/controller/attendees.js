@@ -50,7 +50,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     adminId = user?.adminId;
   }
 
-  addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(adminId));
+  addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(`${adminId}`));
 
   //filtering
   if (req?.query) {

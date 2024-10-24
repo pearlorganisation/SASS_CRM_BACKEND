@@ -184,22 +184,42 @@ export const signup = asyncHandler(async (req, res) => {
     res.status(404).json({ status: false, message: "User already Exists" });
     return;
   }
-  console.log('req role', req?.role)
+
   const hashPassword = await bcrypt.hash(password, 10);
+
+  const role = ROLES?.ADMIN;
 
   let payload = {
     userName,
     email,
     password: hashPassword,
     phone,
-    role: req?.role
+    role: role,
   };
+
   const savedUser = await usersModel.create(payload);
+
+  //generate token and update
+
+  const token = jwt.sign(
+    {
+      id: savedUser?._id,
+      rId: savedUser?.role,
+    },
+    process.env.PABBLY_CLIENT_ACCESS_TOKEN_SECRET
+  );
+
+  const user = await usersModel.findOneAndUpdate(
+    { _id: savedUser?.id },
+    {
+      pabblyToken: token,
+    }
+  );
 
   res.status(200).json({
     status: "SUCCESS",
     message: "User created successfully",
-    data: savedUser,
+    data: user,
   });
 });
 
@@ -218,12 +238,10 @@ export const createEmployee = asyncHandler(async (req, res) => {
     // console.log(selectedRole)
     role = ROLES[`${selectedRole}`];
   } else {
-    res
-      .status(500)
-      .json({
-        status: false,
-        message: "Only Admin level roles are allowed to create employees.",
-      });
+    res.status(500).json({
+      status: false,
+      message: "Only Admin level roles are allowed to create employees.",
+    });
   }
 
   console.log(role);
@@ -281,16 +299,13 @@ export const deleteEmployee = asyncHandler(async (req, res) => {
   }
 
   const adminId = req?.id;
+  const role = req?.role;
 
-  if (adminId && req?.role === ROLES.ADMIN) {
-    role = ROLES[`${selectedRole}`];
-  } else {
-    res
-      .status(500)
-      .json({
-        status: false,
-        message: "Only Admin level roles are allowed to create employees.",
-      });
+  if (role !== ROLES.ADMIN) {
+    res.status(500).json({
+      status: false,
+      message: "Only Admin level roles are allowed to delete employees.",
+    });
   }
 
   const isMyAdmin = await usersModel.findOne({ _id: userId, adminId: adminId });
@@ -298,9 +313,11 @@ export const deleteEmployee = asyncHandler(async (req, res) => {
   if (!isMyAdmin) {
     return res.status(500).json({
       status: false,
-      message: "Only employee's admin is allowed to assign attendees",
+      message: "Only user's admin is allowed to delete them!",
     });
   }
+
+  //write delete employee logic here
 });
 
 // @desc - to fetch the users data

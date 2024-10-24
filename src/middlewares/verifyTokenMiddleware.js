@@ -79,6 +79,7 @@ export const verifySuperAdminTokenMiddleware = async (req, res, next) => {
   }
 };
 
+//pabbly super admin token middleware
 export const verifyPabblySATokenMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
@@ -113,3 +114,40 @@ export const verifyPabblySATokenMiddleware = async (req, res, next) => {
     });
   }
 };
+
+//pabbly token middleware
+export const verifyPabblyTokenMiddleware = async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+
+    console.log(token);
+    if (!token) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized! Please Check Your Credentials",
+      });
+    }
+
+    jwt.verify(
+      token,
+      process.env.PABBLY_CLIENT_ACCESS_TOKEN_SECRET,
+      async (error, user) => {
+        if (error || !user?.rId || user?.rId !== ROLES.SUPER_ADMIN) {
+          return res.status(403).json({
+            success: false,
+            message: "Unauthorized token! Please Check Your Login Credentials",
+          });
+        }
+        req.role = ROLES?.ADMIN;
+        next();
+      }
+    );
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal Server Error",
+    });
+  }
+};
+
