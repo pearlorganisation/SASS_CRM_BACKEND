@@ -15,21 +15,6 @@ export const getEmployees = asyncHandler(async (req, res) => {
 
   adminId = req?.id;
 
-  const isMyAdmin = await usersModel.findOne({ _id: userId, adminId: adminId });
-
-  if (!isMyAdmin) {
-    return res.status(500).json({
-      status: false,
-      message: "Only employee's admin is allowed to see their employees",
-    });
-  }
-
-  if (!userId && !attendees && attendees && attendees?.length === 0) {
-    return res
-      .status(500)
-      .json({ status: false, message: "Missing userId/attendees" });
-  }
-
   if (!adminId) {
     res.status(500).json({ status: false, message: "Admin ID not found" });
   }
