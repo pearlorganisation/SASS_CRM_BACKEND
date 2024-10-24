@@ -10,7 +10,7 @@ dotenv.config();
 export const mongoConnect = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
-      dbName: "saasCrm",
+      dbName: process.env.DBNAME,
       // autoIndex: true,
     });
     console.log(chalk.white.bgBlue("MongoDB connected successfully"));
@@ -26,7 +26,7 @@ export const mongoConnect = async () => {
 
 export const syncIndexes = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, { dbName: "saasCrm" });
+    await mongoose.connect(process.env.MONGO_URI, { dbName: process.env.DBNAME });
     
     // Sync the indexes
     await AttendeeModel.syncIndexes();

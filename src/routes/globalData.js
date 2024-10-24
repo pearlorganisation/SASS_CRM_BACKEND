@@ -11,7 +11,6 @@ globalDataRouter.route('/').get((req, res) => {
 
 globalDataRouter.route("/landingpage").get(getGlobalData).post(verifySuperAdminTokenMiddleware, upload.fields([{ name: "file" }]),addGlobalData)
 
-
 globalDataRouter.route('/sidebarLinks').get(getSidebarLinks).post(verifySuperAdminTokenMiddleware, addSidebarLink)
 
 export default globalDataRouter

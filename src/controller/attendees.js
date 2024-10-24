@@ -19,10 +19,10 @@ export const addAttendees = asyncHandler(async (req, res) => {
     });
   }
 
-  const data = req.body;
-  const csvName = req?.body[0].csvName;
+  const data = req?.body;
+  const csvName = req?.body[0]?.csvName;
   const date = new Date();
-  const randomString = date.getTime();
+  const randomString = date?.getTime();
 
   data.forEach((e) => {
     e.csvId = `${csvName}${randomString}`;
@@ -446,7 +446,6 @@ export const getAssignments = asyncHandler(async (req, res) => {
 
   const employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
 
-
   // Aggregation to get assignments
   const result = await usersModel.aggregate([
     { $match: { _id: employeeId } },
@@ -516,7 +515,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
     },
     { $project: { _id: 0, totalCount: 1, results: 1 } }, // Format the output
     { $unwind: "$results" },
-    { $skip: skip }, 
+    { $skip: skip },
     { $limit: limit },
   ]);
 
