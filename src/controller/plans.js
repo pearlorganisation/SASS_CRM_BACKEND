@@ -30,7 +30,6 @@ export const addPlan = asyncHandler(async (req, res) => {
   res.status(200).send("Plan Created Successfully");
 });
 
-
 //get plan
 export const getPlans = asyncHandler(async (req, res) => {
   const plans = await planModel.find();
@@ -39,10 +38,10 @@ export const getPlans = asyncHandler(async (req, res) => {
 
 //delete plan api
 export const deletePlan = asyncHandler(async (req, res) => {
-  const {id} = req?.params
-  if(!id) {
-    res.status(500).json({status: false, message: "Plan ID not provided"})
+  const { id } = req?.params;
+  if (!id) {
+    res.status(500).json({ status: false, message: "Plan ID not provided" });
   }
   const plans = await planModel.findByIdAndDelete(id);
-  res.status(200).json({ status: true,message: "Plan Deleted successfully." });
+  res.status(200).json({ status: true, message: "Plan Deleted successfully." });
 });

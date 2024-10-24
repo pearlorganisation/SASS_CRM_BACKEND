@@ -298,7 +298,6 @@ export const deleteCsvData = asyncHandler(async (req, res) => {
 
 export const assignAttendees = asyncHandler(async (req, res) => {
   const { userId, attendees } = req?.body; // Assuming attendees is an array of attendee objects with attendeeId and recordType
-  console.log(attendees);
 
   if (req?.role !== ROLES.ADMIN) {
     res.status(500).json({
@@ -432,19 +431,24 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-  if (![ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
+  let employeeId;
+
+  if (ROLES?.ADMIN === req?.role && req?.query?.employeeId) {
+    employeeId = new mongoose.Types.ObjectId(`${req?.query?.employeeId}`);
+  } else if (
+    [ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)
+  ) {
+    employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
+  } else {
     return res
       .status(500)
-      .json({ status: false, message: "Not logged in as an employee" });
+      .json({ status: false, message: "Missing EmployeeId or Role not allowed" });
   }
-
   //pagination
   const page = Number(req?.query?.page) || 1;
   const limit = Number(req?.query?.limit) || 25;
   const skip = (page - 1) * limit;
   let totalPages = 1;
-
-  const employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
 
   // Aggregation to get assignments
   const result = await usersModel.aggregate([
