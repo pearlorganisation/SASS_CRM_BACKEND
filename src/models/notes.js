@@ -4,31 +4,42 @@ const noteSchema = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: [true, "Attendee Email is required"],
       trim: true,
     },
-    name: {
+    note: {
       type: String,
-      required: [true, "Name is required"],
+      required: [true, "Note is required"],
       trim: true,
     },
     phone: {
-        type: String,
-        required: [true, "phone is required"],
-        trim: true,
-    },
-    leadType: {
       type: String,
-      default: null
+      required: [true, "phone is required"],
+      trim: true,
     },
-    csvId: {
-        type: String,
-        required: [true, "csv file id/name is required"]
-    }
+    callDuration: {
+      type: {
+        hr: { type: String, default: "00" },
+        min: { type: String, default: "00" },
+        sec: { type: String, default: "00" },
+      },
+    },
+    status: {
+      type: String,
+    },
+    image: {
+      type: [],
+      required: false,
+    },
+    adminId: {
+      type: mongoose.Types.ObjectId,
+      ref: "users",
+      required: [true, 'Admin id is required!']
+    },
   },
   { timestamps: true }
 );
 
 const noteModel = mongoose.model("note", noteSchema);
 
-export default noteModel
+export default noteModel;

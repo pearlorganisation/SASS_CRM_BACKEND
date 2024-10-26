@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
 import { sidebarLinksModel } from "../models/sidebarLinks.js";
-import { globalDataModel } from "../models/globarData.js";
+import { globalDataModel } from "../models/globalData.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Sidebar Links:

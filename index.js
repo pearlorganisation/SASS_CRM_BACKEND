@@ -12,6 +12,7 @@ import planRouter from "./src/routes/plans.js";
 import productRouter from "./src/routes/product.js";
 import employeeRouter from "./src/routes/employee.js";
 import globalDataRouter from "./src/routes/globalData.js";
+import customSettingsRouter from "./src/routes/customSettings.js";
 
 dotenv.config();
 
@@ -63,6 +64,8 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/plans", planRouter);
 app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/globalData", globalDataRouter);
+app.use("/api/v1/customSettings", customSettingsRouter);
+
 
 app.get("/", (req, res) => {
   res.send("Server is running!");

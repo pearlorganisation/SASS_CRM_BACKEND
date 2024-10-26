@@ -534,3 +534,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
     data: paginatedResults,
   });
 });
+
+// export const updateLeadType = asyncHandler(async (req, res) => {
+//   const {leadType, adminId} = req?.body
+// })
