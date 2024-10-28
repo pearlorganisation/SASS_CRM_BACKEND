@@ -1,21 +1,54 @@
-import noteModel from "../models/notes";
-import { asyncHandler } from "../utils/errorHandler/asyncHandler";
 
-const ROLES = JSON.parse(process.env.ROLES);
+import noteModel from "../models/notes.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
 
 // Create a new note
 export const createNote = asyncHandler(async (req, res) => {
-  const newNote = await noteModel.create(req.body);
-  res.status(200).json({ success: true, data: newNote });
+  const { email, recordType, note, phone, callDuration, status } =
+    req.body;
 
-  res.status(400).json({ success: false, error: error.message });
+
+  console.log(req.files,"req");
+
+  if (!email && !recordType && !note && !phone && !status) {
+    return res
+      .status(200)
+      .json({ status: false, message: "Incomplete form data" });
+  }
+
+  const image = await uploadOnCloudinary(req.files.image[0].path);
+  if (!image) {
+    res.status(500).json({status:false, message: 'Failed to upload image on cloudinary'})
+  }
+
+  const payload = {
+    email,
+    recordType,
+    note,
+    phone,
+    callDuration,
+    status,
+    image,
+    adminId: req?.adminId,
+  };
+
+
+
+  const newNote = await noteModel.create(payload);
+  res.status(200).json({ success: true, data:newNote });
 });
 
 // Get all notes
 export const getNotes = asyncHandler(async (req, res) => {
-  const notes = await noteModel.find();
+  if (!req?.query?.email && !req?.query?.recordType) {
+    return res
+      .status(500)
+      .json({ status: false, message: "Missing E-Mail/recordType" });
+  }
+  const pipeline = { email:req?.query?.email , recordType: req?.query?.recordType, adminId: req?.adminId };
+  const notes = await noteModel.find(pipeline).sort({ updatedAt: -1 });
   res.status(200).json({ success: true, data: notes });
-
   res.status(500).json({ success: false, error: error.message });
 });
 

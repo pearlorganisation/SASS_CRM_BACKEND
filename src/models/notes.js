@@ -7,6 +7,11 @@ const noteSchema = new mongoose.Schema(
       required: [true, "Attendee Email is required"],
       trim: true,
     },
+    recordType: {
+      type: String,
+      required: [true, "Attendee Email is required"],
+      trim: true,
+    },
     note: {
       type: String,
       required: [true, "Note is required"],
@@ -26,6 +31,7 @@ const noteSchema = new mongoose.Schema(
     },
     status: {
       type: String,
+      required: [true, 'status is required']
     },
     image: {
       type: [],

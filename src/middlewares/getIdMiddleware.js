@@ -16,7 +16,7 @@ export const getAdminId = asyncHandler(async(req, res, next) => {
       _id: new mongoose.Types.ObjectId(`${req?.id}`),
     });
     req.adminId = user?.adminId;
-
+    console.log("req.body",req.body);
     next()
   } else {
     return res.status(500).json({ status: false, message: "Admin Id not found" });

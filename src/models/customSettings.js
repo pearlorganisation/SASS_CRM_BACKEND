@@ -8,24 +8,26 @@ const customSettingsSchema = mongoose.Schema(
       unique: true,
       required: [true, "Admin id is required"],
     },
-    leadType: {
-      type: {
-        name: {
-          type: String,
-          unique: true,
-          required: [true, "lead type name is required"],
+    leadType: [
+      {
+        type: {
+          name: {
+            type: String,
+            unique: true,
+            required: [true, "lead type name is required"],
+          },
+          fontColor: {
+            type: String,
+            default: "#000000",
+          },
+          bgColor: {
+            type: String,
+            default: "#ffffff",
+          },
         },
-        fontColor: {
-          type: String,
-          default: "#000000",
-        },
-        bgColor: {
-          type: String,
-          default: "#ffffff",
-        },
+        required: true,
       },
-      required: true,
-    },
+    ],
   },
   { timestamps: true }
 );

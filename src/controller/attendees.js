@@ -122,20 +122,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
       $group: {
         _id: "$email",
         records: {
-          $push: {
-            _id: "$_id",
-            firstName: "$firstName",
-            lastName: "$lastName",
-            phone: "$phone",
-            employeeName: "$employeeName",
-            csvName: "$csvName",
-            csvId: "$csvId",
-            recordType: "$recordType",
-            date: "$date",
-            timeInSession: "$timeInSession",
-            createdAt: "$createdAt",
-            updatedAt: "$updatedAt",
-          },
+          $push: "$$ROOT",
         },
       },
     },

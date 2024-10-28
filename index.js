@@ -13,12 +13,14 @@ import productRouter from "./src/routes/product.js";
 import employeeRouter from "./src/routes/employee.js";
 import globalDataRouter from "./src/routes/globalData.js";
 import customSettingsRouter from "./src/routes/customSettings.js";
+import notesRouter from "./src/routes/notes.js";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 8000;
 const app = express();
 
+app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -33,9 +35,9 @@ app.use(
             "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
-          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token", "x-www-form-urlencoded"],
           credentials: true,
-          maxAge: 600,
+          // maxAge: 600,
           exposedHeaders: ["*", "Authorization"],
         }
       : {
@@ -46,10 +48,10 @@ app.use(
             "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
-          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token","x-www-form-urlencoded"],
           credentials: true,
 
-          maxAge: 600,
+          // maxAge: 600,
           exposedHeaders: ["*", "Authorization"],
         }
   )
@@ -65,6 +67,8 @@ app.use("/api/v1/plans", planRouter);
 app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/globalData", globalDataRouter);
 app.use("/api/v1/customSettings", customSettingsRouter);
+app.use("/api/v1/notes", notesRouter);
+
 
 
 app.get("/", (req, res) => {
