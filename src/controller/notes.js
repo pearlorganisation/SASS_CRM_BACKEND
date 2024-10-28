@@ -13,7 +13,6 @@ export const createNote = asyncHandler(async (req, res) => {
 
 // Get all notes
 export const getNotes = asyncHandler(async (req, res) => {
-
   const notes = await noteModel.find();
   res.status(200).json({ success: true, data: notes });
 

@@ -43,7 +43,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   let pipeline = { recordType };
 
-  addFilter(pipeline, "adminId", adminId);
+  addFilter(pipeline, "adminId", req?.adminId);
 
   //filtering
   if (req?.query) {
