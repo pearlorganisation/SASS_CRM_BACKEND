@@ -7,7 +7,7 @@ const ROLES = JSON.parse(process.env.ROLES);
 export const getAdminId = asyncHandler(async(req, res, next) => {
     
   if (req?.role === ROLES?.ADMIN) {
-    req.adminId = req?.id;
+    req.adminId = new mongoose.Types.ObjectId(`${req?.id}`);
     next()
   } else if (
     [ROLES?.EMPLOYEE_SALES, ROLES?.EMPLOYEE_REMINDER].includes(req?.role)

@@ -42,7 +42,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (!recordType) recordType = "sales";
 
   let pipeline = { recordType };
-
+  console.log(req?.adminId)
   addFilter(pipeline, "adminId", req?.adminId);
 
   //filtering
