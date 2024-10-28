@@ -43,14 +43,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   let pipeline = { recordType };
 
-  let adminId = req.id;
-
-  if ([ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
-    const user = await usersModel.findOne({ _id: req?.id });
-    adminId = user?.adminId;
-  }
-
-  addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(`${adminId}`));
+  addFilter(pipeline, "adminId", adminId);
 
   //filtering
   if (req?.query) {
@@ -180,56 +173,18 @@ export const getAttendee = asyncHandler(async (req, res) => {
   let pipeline = {
     email: { $regex: new RegExp(`^${email}$`, "i") }, // Case-insensitive email search
     recordType: recordType,
+    adminId: req?.adminId,
   };
 
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
-    {
-      $lookup: {
-        from: "users", // Collection name for users
-        let: { attendeeEmail: "$email", attendeeRecordType: "$recordType" }, // Fields from attendee
-        pipeline: [
-          { $unwind: "$assignments" }, // Unwind assignments array
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$assignments.email", "$$attendeeEmail"] },
-                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] },
-                ],
-              },
-            },
-          },
-          { $project: { userName: 1 } }, // Project only userName
-        ],
-        as: "employeeData", // Output field
-      },
-    },
-    {
-      $addFields: {
-        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] }, // Extract employee name
-      },
-    },
-    { $project: { employeeData: 0 } }, // Exclude employeeData array from result
+    { $sort: { createdAt: -1 } },
     {
       $group: {
         _id: "$email",
-        records: {
-          $push: {
-            _id: "$_id",
-            firstName: "$firstName",
-            lastName: "$lastName",
-            phone: "$phone",
-            employeeName: "$employeeName",
-            csvName: "$csvName",
-            csvId: "$csvId",
-            recordType: "$recordType",
-            date: "$date",
-            timeInSession: "$timeInSession",
-            createdAt: "$createdAt",
-            updatedAt: "$updatedAt",
-          },
+        data: {
+          $push: "$$ROOT",
         },
       },
     },
@@ -442,7 +397,10 @@ export const getAssignments = asyncHandler(async (req, res) => {
   } else {
     return res
       .status(500)
-      .json({ status: false, message: "Missing EmployeeId or Role not allowed" });
+      .json({
+        status: false,
+        message: "Missing EmployeeId or Role not allowed",
+      });
   }
   //pagination
   const page = Number(req?.query?.page) || 1;
