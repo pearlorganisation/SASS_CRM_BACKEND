@@ -8,3 +8,11 @@ export const getCustomSettings = asyncHandler(async (req, res) => {
   });
   res.status(200).json({ status: true, data: result });
 });
+
+
+export const addCustomSettings = asyncHandler(async (req, res) => {
+  const result = await customSettingsModel.findOne({
+    adminId: req?.adminId,
+  });
+  res.status(200).json({ status: true, data: result });
+});
