@@ -491,6 +491,19 @@ export const getAssignments = asyncHandler(async (req, res) => {
   });
 });
 
-// export const updateLeadType = asyncHandler(async (req, res) => {
-//   const {leadType, adminId} = req?.body
-// })
+export const updateLeadType = asyncHandler(async (req, res) => {
+  const { leadType, email, recordType } = req?.body;
+
+  const payload = {
+    leadType: leadType,
+  };
+
+  const result = await attendeesModel.updateMany(
+    { email: email, recordType: recordType, adminId: req?.adminId },
+    payload
+  );
+
+  res
+    .status(200)
+    .json({ status: true, message: "Lead type updated successfully.", data: result });
+});
