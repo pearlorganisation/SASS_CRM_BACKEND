@@ -42,7 +42,6 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (!recordType) recordType = "sales";
 
   let pipeline = { recordType };
-  console.log(req?.adminId)
   addFilter(pipeline, "adminId", req?.adminId);
 
   //filtering
@@ -61,6 +60,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     if (gender) {
       addFilter(pipeline, "gender", gender);
     }
+
     if (location) {
       addFilter(pipeline, "location", location);
     }
@@ -75,7 +75,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
 
   //pagination
-  const page = Number(req?.query?.page) || 1;
+  const page = Number(req?.params?.page) || 1;
   const limit = Number(req?.query?.limit) || 25;
   const skip = (page - 1) * limit;
   let totalPages = 1;
@@ -395,12 +395,10 @@ export const getAssignments = asyncHandler(async (req, res) => {
   ) {
     employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
   } else {
-    return res
-      .status(500)
-      .json({
-        status: false,
-        message: "Missing EmployeeId or Role not allowed",
-      });
+    return res.status(500).json({
+      status: false,
+      message: "Missing EmployeeId or Role not allowed",
+    });
   }
   //pagination
   const page = Number(req?.query?.page) || 1;
