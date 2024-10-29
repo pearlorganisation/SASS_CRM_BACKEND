@@ -50,18 +50,16 @@ export const getNotes = asyncHandler(async (req, res) => {
   const pipeline = { email:req?.query?.email , recordType: req?.query?.recordType, adminId: req?.adminId };
   const notes = await noteModel.find(pipeline).sort({ updatedAt: -1 });
   res.status(200).json({ success: true, data: notes });
-  res.status(500).json({ success: false, error: error.message });
 });
 
 // Get a single note by ID
 export const getNoteById = asyncHandler(async (req, res) => {
   const note = await noteModel.findById(req.params.id);
   if (!note) {
-    return res.status(404).json({ success: false, error: "Note not found" });
+    return res.status(404).json({ success: false, message: "Note not found" });
   }
   res.status(200).json({ success: true, data: note });
 
-  res.status(500).json({ success: false, error: error.message });
 });
 
 // Update a note by ID
@@ -75,20 +73,18 @@ export const updateNote = asyncHandler(async (req, res) => {
     }
   );
   if (!updatedNote) {
-    return res.status(404).json({ success: false, error: "Note not found" });
+    return res.status(404).json({ success: false, message: "Note not found" });
   }
   res.status(200).json({ success: true, data: updatedNote });
 
-  res.status(400).json({ success: false, error: error.message });
 });
 
 // Delete a note by ID
 export const deleteNote = asyncHandler(async (req, res) => {
   const deletedNote = await noteModel.findByIdAndDelete(req.params.id);
   if (!deletedNote) {
-    return res.status(404).json({ success: false, error: "Note not found" });
+    return res.status(404).json({ success: false, message: "Note not found" });
   }
   res.status(200).json({ success: true, message: "Note deleted successfully" });
 
-  res.status(500).json({ success: false, error: error.message });
 });
