@@ -46,20 +46,15 @@ export const addGlobalData = asyncHandler(async (req, res) => {
         .json({ status: false, message: "Missing required parameters." });
     }
 
-    if (
-      req?.files?.file &&
-      Array.isArray(req.files.file) &&
-      req.files.file.length > 0 &&
-      req.files.file[0]?.path
-    ) {
-      console.log("Uploading image to Cloudinary...");
-      const uploadResponse = await uploadOnCloudinary(req.files.file[0].path);
-      if (uploadResponse) {
-        uploadedFileUrl = uploadResponse.url;
-        console.log("Image uploaded:", uploadedFileUrl);
-      } else {
-        console.log("Failed to upload image");
-      }
+    console.log("Uploading image to Cloudinary...");
+    const { uploadStatus, uploadResponse } = await uploadOnCloudinary(
+      req?.files?.file
+    );
+    if (uploadStatus) {
+      uploadedFileUrl = uploadResponse.url;
+      console.log("Image uploaded:", uploadedFileUrl);
+    } else {
+      console.log("Failed to upload image");
     }
 
     const newGlobalData = new globalDataModel({

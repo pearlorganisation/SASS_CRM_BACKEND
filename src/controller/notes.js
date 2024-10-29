@@ -9,7 +9,6 @@ export const createNote = asyncHandler(async (req, res) => {
     req.body;
 
 
-  console.log(req.file,"req");
 
   if (!email && !recordType && !note && !phone && !status) {
     return res
@@ -17,15 +16,11 @@ export const createNote = asyncHandler(async (req, res) => {
       .json({ status: false, message: "Incomplete form data" });
   }
 
-  let image = null;
-
-  if (req.files && req.files.image && req.files.image[0]) {
-    image = await uploadOnCloudinary(req.files.image[0].path);
-    if (!image) {
-      return res
-        .status(500)
-        .json({ status: false, message: "Failed to upload image on Cloudinary" });
-    }
+  let {uploadStatus, uploadResponse} = await uploadOnCloudinary(req?.files?.image);
+  if (!uploadStatus) {
+    return res
+      .status(500)
+      .json({ status: false, message: "Failed to upload image on Cloudinary" });
   }
 
   const payload = {
@@ -35,7 +30,7 @@ export const createNote = asyncHandler(async (req, res) => {
     phone,
     callDuration,
     status,
-    image,
+    image : uploadResponse,
     adminId: req?.adminId,
   };
 
