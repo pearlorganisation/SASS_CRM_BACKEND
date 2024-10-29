@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { mongoConnect, syncIndexes } from "./src/config/db.js";
 import attendeesRouter from "./src/routes/attendees.js";
@@ -15,12 +17,34 @@ import globalDataRouter from "./src/routes/globalData.js";
 import customSettingsRouter from "./src/routes/customSettings.js";
 import notesRouter from "./src/routes/notes.js";
 
-dotenv.config();
+//swagger
+import swaggerUi from "swagger-ui-express";
+import swaggerJSDoc from "swagger-jsdoc";
+
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "SAAS CRM API",
+      version: "1.0.0",
+      description: "API Documentation for SAAS CRM",
+    },
+    servers: [
+      {
+        url: "http://localhost:8000",
+      },
+    ],
+  },
+  apis: ["./src/routes/*.js"],
+};
+
+const specs = swaggerJSDoc(options);
 
 const PORT = process.env.PORT || 8000;
 const app = express();
 
-app.use(express.urlencoded({extended: true}));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -35,7 +59,12 @@ app.use(
             "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
-          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token", "x-www-form-urlencoded"],
+          allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "x-csrf-token",
+            "x-www-form-urlencoded",
+          ],
           credentials: true,
           // maxAge: 600,
           exposedHeaders: ["*", "Authorization"],
@@ -48,7 +77,12 @@ app.use(
             "https://saas-crm-frontend.vercel.app",
           ],
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
-          allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token","x-www-form-urlencoded"],
+          allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "x-csrf-token",
+            "x-www-form-urlencoded",
+          ],
           credentials: true,
 
           // maxAge: 600,
@@ -68,8 +102,6 @@ app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/globalData", globalDataRouter);
 app.use("/api/v1/customSettings", customSettingsRouter);
 app.use("/api/v1/notes", notesRouter);
-
-
 
 app.get("/", (req, res) => {
   res.send("Server is running!");
