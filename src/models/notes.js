@@ -20,6 +20,7 @@ const noteSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: [true, "phone is required"],
+      default: null,
       trim: true,
     },
     callDuration: {
