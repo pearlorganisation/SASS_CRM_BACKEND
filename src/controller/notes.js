@@ -16,12 +16,8 @@ export const createNote = asyncHandler(async (req, res) => {
       .json({ status: false, message: "Incomplete form data" });
   }
 
-  let {uploadStatus, uploadResponse} = await uploadOnCloudinary(req?.files?.image);
-  if (!uploadStatus) {
-    return res
-      .status(500)
-      .json({ status: false, message: "Failed to upload image on Cloudinary" });
-  }
+  let { uploadResponse} = await uploadOnCloudinary(req?.files?.image);
+
 
   const payload = {
     email,
