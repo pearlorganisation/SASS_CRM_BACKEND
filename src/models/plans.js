@@ -29,3 +29,5 @@ const planSchema = new mongoose.Schema(
 );
 
 export const planModel = mongoose.model("plan", planSchema, "plan");
+
+

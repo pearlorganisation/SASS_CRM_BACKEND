@@ -45,7 +45,7 @@ export default notesRouter;
 
 /**
  * @swagger
- * /:
+ * /notes:
  *   get:
  *     summary: Retrieve all notes for a specific email and record type.
  *     tags: [Notes]
@@ -77,7 +77,7 @@ export default notesRouter;
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Note'
+ *                     $ref: '#/components/schemas/Notes'
  *       500:
  *         description: Missing required email or recordType in query.
  *
@@ -134,7 +134,7 @@ export default notesRouter;
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Note'
+ *                   $ref: '#/components/schemas/Notes'
  *       400:
  *         description: Incomplete form data or image upload failure.
  */
@@ -165,7 +165,7 @@ export default notesRouter;
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Note'
+ *                   $ref: '#/components/schemas/Notes'
  *       404:
  *         description: Note not found.
  *
@@ -186,7 +186,7 @@ export default notesRouter;
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Note'
+ *             $ref: '#/components/schemas/Notes'
  *     responses:
  *       200:
  *         description: Successfully updated note.
@@ -198,7 +198,7 @@ export default notesRouter;
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Note'
+ *                   $ref: '#/components/schemas/Notes'
  *       404:
  *         description: Note not found.
  *
