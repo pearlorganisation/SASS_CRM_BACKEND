@@ -21,6 +21,20 @@ import notesRouter from "./src/routes/notes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
 
+//socket
+import {Server as SocketIOServer} from 'socket.io'
+import http from 'http'
+import userActivityRouter from "./src/routes/userActivity.js";
+
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://saas-crm-nine.vercel.app",
+  "https://saas-crm-frontend.vercel.app",
+]
+
+
 const options = {
   definition: {
     openapi: "3.0.0",
@@ -43,6 +57,21 @@ const specs = swaggerJSDoc(options);
 const PORT = process.env.PORT || 8000;
 const app = express();
 
+// creating http server
+const server = http.createServer(app);
+// initiating socket server
+const io = new SocketIOServer(server, {
+  cors: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, Postman)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+    } else {
+        callback(new Error('Not allowed by CORS'));
+    }
+},
+});
+
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -52,12 +81,7 @@ app.use(
   cors(
     process.env.NODE_ENV === "production"
       ? {
-          origin: [
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "https://saas-crm-nine.vercel.app",
-            "https://saas-crm-frontend.vercel.app",
-          ],
+          origin: allowedOrigins,
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: [
             "Content-Type",
@@ -70,12 +94,7 @@ app.use(
           exposedHeaders: ["*", "Authorization"],
         }
       : {
-          origin: [
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "https://saas-crm-nine.vercel.app",
-            "https://saas-crm-frontend.vercel.app",
-          ],
+          origin: allowedOrigins,
           methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
           allowedHeaders: [
             "Content-Type",
@@ -102,12 +121,30 @@ app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/globalData", globalDataRouter);
 app.use("/api/v1/customSettings", customSettingsRouter);
 app.use("/api/v1/notes", notesRouter);
+app.use("/api/v1/userActivity", userActivityRouter);
+
 
 app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
-app.listen(PORT, () => {
+
+// =======================Socket starts=======================
+
+io.on("connection", (socket) => {
+  console.log(`A user has connected to socket, their ID ${socket.id}`);
+  
+  
+
+  socket.on("disconnect", () => {
+    console.log(`User with id ${socket.id} has disconnected`);
+  });
+});
+
+// =======================Socket ends=======================
+
+
+server.listen(PORT, () => {
   console.log(`Server Listening on port ${PORT}`);
   syncIndexes();
   mongoConnect();

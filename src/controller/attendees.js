@@ -182,6 +182,25 @@ export const getAttendee = asyncHandler(async (req, res) => {
     .json({ status: true, message: "data found successfully", data: result });
 });
 
+export const updateAttendee = asyncHandler(async (req, res) => {
+  const { id } = req?.body;
+  const payload = {
+    firstName: req?.body?.firstName,
+    lastName: req?.body?.lastName,
+    phone: req?.body?.phone,
+    gender: req?.body?.gender,
+    location: req?.body?.location,
+  };
+
+  const result = await attendeesModel.findOneAndUpdate({_id: new mongoose.Types.ObjectId(`${id}`), adminId: req?.adminId }, payload, {
+    new: true,
+    fields: { assignments: { $slice: -1 } },
+  });
+  res
+    .status(200)
+    .json({ status: true, message: "Attendee data updated successfully", data: result });
+});
+
 export const getCsvData = asyncHandler(async (req, res) => {
   const page = req?.params?.page || 1;
   const limit = 8;
@@ -373,7 +392,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-  console.log(req?.query?.employeeId)
+  console.log(req?.query?.employeeId);
   let employeeId;
 
   if (ROLES?.ADMIN === req?.role && req?.query?.employeeId) {
@@ -493,5 +512,9 @@ export const updateLeadType = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json({ status: true, message: "Lead type updated successfully.", data: result });
+    .json({
+      status: true,
+      message: "Lead type updated successfully.",
+      data: result,
+    });
 });

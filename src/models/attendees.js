@@ -77,6 +77,12 @@ const attendeeSchema = new mongoose.Schema(
       enums: ["male", "female", "others"],
       required: false,
     },
+    location: {
+      type: String,
+      minLength: 1,
+      maxLength: 100,
+      required: false,
+    },
     adminId: {
       type: mongoose.Types.ObjectId,
       ref: "users",
