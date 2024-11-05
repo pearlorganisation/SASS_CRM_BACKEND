@@ -4,12 +4,9 @@ import { asyncHandler } from "../utils/errorHandler/asyncHandler.js";
 
 
 export const addUserActivity = asyncHandler(async (req, res) => {
-    const {activityLog} = req?.body
+    const {date, activityLog} = req?.body
     const userId = req?.id
 
-    const activityDate = new Date(activityLog)
-    const date = activityDate.setHours(1,1,1,1)
-    console.log(new Date(date))
 
     if(!userId && !activityLog) {
         return res.status(500).json({status: false, message: "UserID/Activity log not Provided"})
@@ -21,7 +18,7 @@ export const addUserActivity = asyncHandler(async (req, res) => {
     let result;
     console.log(exists)
     if(exists){
-        result = await userActivityModel.findByIdAndUpdate(exists._id, {$push: {activity: new Date(activityLog)}})
+        result = await userActivityModel.findByIdAndUpdate(exists._id, {$push: {activity: activityLog}})
     } else {
         result = await userActivityModel.create({user: new mongoose.Types.ObjectId(`${userId}`) , date: date, activity: [activityLog], adminId: req?.adminId})
     }
