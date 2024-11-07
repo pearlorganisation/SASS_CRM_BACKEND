@@ -461,6 +461,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
             lastName: "$assignments.lastName",
             phone: "$assignments.phone",
             employeeName: "$assignments.employeeName",
+            leadType: "$assignments.leadType",
             csvName: "$assignments.csvName",
             csvId: "$assignments.csvId",
             recordType: "$assignments.recordType",
