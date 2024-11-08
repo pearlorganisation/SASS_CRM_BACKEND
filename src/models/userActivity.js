@@ -7,17 +7,14 @@ const userActivitySchema = new mongoose.Schema(
       ref: "users",
       required: [true, "User ID is required"],
     },
-    date: {
-      type: Date,
-      required: [true, "date is required"],
-      unique: true,
+    action: {
+      type: String,
+      required: true,
     },
-    activity: [
-      {
-        type: Date,
-        required: [true, "activity dateTime is required"],
-      },
-    ],
+    details: {
+      type: String,
+      default: '',
+    },
     adminId: {
         type: mongoose.Types.ObjectId,
         ref: "users",

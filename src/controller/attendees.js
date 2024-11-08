@@ -79,8 +79,10 @@ export const getAttendees = asyncHandler(async (req, res) => {
   const limit = Number(req?.query?.limit) || 25;
   const skip = (page - 1) * limit;
   let totalPages = 1;
+  console.log(page,limit,skip);
 
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
+  console.log(totalAttendees)
   totalPages = Math.ceil(totalAttendees / limit);
 
   // Aggregation pipeline to join user data and match on email and recordType
@@ -192,13 +194,21 @@ export const updateAttendee = asyncHandler(async (req, res) => {
     location: req?.body?.location,
   };
 
-  const result = await attendeesModel.findOneAndUpdate({_id: new mongoose.Types.ObjectId(`${id}`), adminId: req?.adminId }, payload, {
-    new: true,
-    fields: { assignments: { $slice: -1 } },
-  });
+  const result = await attendeesModel.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(`${id}`), adminId: req?.adminId },
+    payload,
+    {
+      new: true,
+      fields: { assignments: { $slice: -1 } },
+    }
+  );
   res
     .status(200)
-    .json({ status: true, message: "Attendee data updated successfully", data: result });
+    .json({
+      status: true,
+      message: "Attendee data updated successfully",
+      data: result,
+    });
 });
 
 export const getCsvData = asyncHandler(async (req, res) => {
@@ -412,6 +422,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
   const limit = Number(req?.query?.limit) || 25;
   const skip = (page - 1) * limit;
   let totalPages = 1;
+  console.log(page,limit,skip);
 
   // Aggregation to get assignments
   const result = await usersModel.aggregate([
@@ -511,11 +522,9 @@ export const updateLeadType = asyncHandler(async (req, res) => {
     payload
   );
 
-  res
-    .status(200)
-    .json({
-      status: true,
-      message: "Lead type updated successfully.",
-      data: result,
-    });
+  res.status(200).json({
+    status: true,
+    message: "Lead type updated successfully.",
+    data: result,
+  });
 });
