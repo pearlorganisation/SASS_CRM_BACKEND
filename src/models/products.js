@@ -18,6 +18,9 @@ const productSchema = new mongoose.Schema(
       type: String,
       require: [true, "Webinar name is required"],
     },
+    description: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
