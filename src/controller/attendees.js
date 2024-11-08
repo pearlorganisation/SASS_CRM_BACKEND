@@ -76,7 +76,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   //pagination
   const page = Number(req?.params?.page) || 1;
-  const limit = Number(req?.query?.limit) || 25;
+  const limit = Number(req?.query?.limit) || 30;
   const skip = (page - 1) * limit;
   let totalPages = 1;
   console.log(page,limit,skip);
