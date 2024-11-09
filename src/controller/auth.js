@@ -43,6 +43,12 @@ export const login = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Incorrect UserName/Password" });
   }
 
+  if (!user?.isActive) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied: User account is inactive. Please contact your administrator.",
+    });
+  }
   // accessToken - Generating Access Token
   const accessToken = jwt.sign(
     {
