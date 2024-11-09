@@ -8,6 +8,7 @@ const planSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
+      unique: true,
       required: [true, "Plan Price is required"],
     },
     planExpiry: {
@@ -23,6 +24,22 @@ const planSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Contact upload limit is required"],
       default: 1,
+    },
+    employeeReminder: {
+      type: Boolean,
+      default: false
+    },
+    purchaseHistory: {
+      type: Boolean,
+      default: false
+    },
+    employeeStatus: {
+      type: Boolean,
+      default: false
+    },
+    employeeActivity: {
+      type: Boolean,
+      default: false
     },
   },
   { timestamps: true }

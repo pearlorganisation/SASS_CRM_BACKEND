@@ -252,7 +252,6 @@ export const createEmployee = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log(role);
 
   if (req?.plan) {
     plan = await planModel.findById(req?.plan);
@@ -270,8 +269,6 @@ export const createEmployee = asyncHandler(async (req, res) => {
 
   const employeeCount = await usersModel.countDocuments({ adminId: adminId });
 
-  // console.log(employeeCount, plan.employeesCount);
-  // return;
   if (employeeCount < plan.employeesCount) {
     const hashPassword = await bcrypt.hash(password, 10);
 
@@ -374,3 +371,15 @@ export const generateSuperAdminToken = asyncHandler(async (req, res) => {
 
   res.status(200).send(token);
 });
+
+
+
+export const getToken = asyncHandler(async (req, res) => {
+  if([ROLES?.EMPLOYEE_REMINDER, ROLES?.EMPLOYEE_SALES].includes(req?.role)) {
+    return res.status(500).json({status: false, message: "Employees are not authorized to have a token"})
+  }
+
+  const user = await usersModel.findById(req?.id)
+
+  res.status(200).json({status: true, message: "Token found", token: user?.pabblyToken})
+})

@@ -1,5 +1,5 @@
 import express from "express";
-import { addPlan, deletePlan, getPlans } from "../controller/plans.js";
+import { addPlan, deletePlan, getPlan, getPlans, updatePlan } from "../controller/plans.js";
 import {
   verifySuperAdminTokenMiddleware,
   verifyTokenMiddleware,
@@ -10,7 +10,11 @@ planRouter
   .route("/")
   .get(verifyTokenMiddleware, getPlans)
   .post(verifySuperAdminTokenMiddleware, addPlan);
-planRouter.route("/:id").delete(verifySuperAdminTokenMiddleware, deletePlan);
+planRouter
+.route("/:id")
+.delete(verifySuperAdminTokenMiddleware, deletePlan)
+.get(verifySuperAdminTokenMiddleware, getPlan)
+.patch(verifySuperAdminTokenMiddleware, updatePlan);
 
 export default planRouter;
 

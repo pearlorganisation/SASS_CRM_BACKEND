@@ -34,6 +34,9 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "plan",
   },
+  currentPlanExpiry: {
+    type: Date,
+  },
   role: {
     type: mongoose.Types.ObjectId,
     ref: "roles",
@@ -54,7 +57,11 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
-});
+  activeStatus: {
+    type: Boolean,
+    default: true
+  }
+}, {timestamps: true});
 
 const usersModel = new mongoose.model("user", userSchema);
 
