@@ -10,7 +10,7 @@ const attendeeSchema = new mongoose.Schema(
     },
     firstName: {
       type: String,
-      required: [true, "First Name is required"],
+      // required: [true, "First Name is required"],
       trim: true,
     },
     lastName: {
@@ -25,7 +25,7 @@ const attendeeSchema = new mongoose.Schema(
     },
     timeInSession: {
       type: Number,
-      required: [true, "time in session required"],
+      // required: [true, "time in session required"],
       default: 0,
     },
     leadType: {
