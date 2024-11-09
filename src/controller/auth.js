@@ -11,7 +11,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const ROLES = JSON.parse(process.env.ROLES);
-// console.log(ROLES)
 
 // -------------------------------------------------------------------------------------------
 // @desc - to fetch the users data
@@ -178,10 +177,10 @@ export const refreshToken = asyncHandler(async (req, res) => {
 // @route - POST /auth/signup
 
 export const signup = asyncHandler(async (req, res) => {
-  const { password, userName, phone, email } = req?.body;
+  const { password, userName, phone, email, amount } = req?.body;
 
-  if (!password || !userName || !email) {
-    res.status(500).json({ status: false, message: "Incomplete inputs" });
+  if (!password || !userName || !email || !amount) {
+    return res.status(500).json({ status: false, message: "Incomplete inputs" });
   }
 
   const isUserExists = await usersModel.findOne({ email });
@@ -190,6 +189,14 @@ export const signup = asyncHandler(async (req, res) => {
     res.status(404).json({ status: false, message: "User already Exists" });
     return;
   }
+
+  const plan = await planModel.findOne({price: Number(amount)})
+
+  if(!plan) {
+    return res.status(500).json({status: false, message: "No plan found for the price"})
+  }
+
+
 
   const hashPassword = await bcrypt.hash(password, 10);
 
@@ -201,6 +208,7 @@ export const signup = asyncHandler(async (req, res) => {
     password: hashPassword,
     phone,
     role: role,
+    plan: plan?._id
   };
 
   const savedUser = await usersModel.create(payload);
@@ -250,7 +258,6 @@ export const createEmployee = asyncHandler(async (req, res) => {
     });
   }
 
-  console.log(role);
 
   if (req?.plan) {
     plan = await planModel.findById(req?.plan);
@@ -268,8 +275,6 @@ export const createEmployee = asyncHandler(async (req, res) => {
 
   const employeeCount = await usersModel.countDocuments({ adminId: adminId });
 
-  // console.log(employeeCount, plan.employeesCount);
-  // return;
   if (employeeCount < plan.employeesCount) {
     const hashPassword = await bcrypt.hash(password, 10);
 
@@ -372,3 +377,15 @@ export const generateSuperAdminToken = asyncHandler(async (req, res) => {
 
   res.status(200).send(token);
 });
+
+
+
+export const getToken = asyncHandler(async (req, res) => {
+  if([ROLES?.EMPLOYEE_REMINDER, ROLES?.EMPLOYEE_SALES].includes(req?.role)) {
+    return res.status(500).json({status: false, message: "Employees are not authorized to have a token"})
+  }
+
+  const user = await usersModel.findById(req?.id)
+
+  res.status(200).json({status: true, message: "Token found", token: user?.pabblyToken})
+})

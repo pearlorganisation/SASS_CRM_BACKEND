@@ -2,6 +2,7 @@ import express from "express";
 import {
   createEmployee,
   generateSuperAdminToken,
+  getToken,
   login,
   refreshToken,
   signup,
@@ -18,6 +19,7 @@ authRouter.route("/signup").post(verifyPabblySATokenMiddleware, signup);
 authRouter.route("/refresh").post(refreshToken);
 authRouter.route("/createEmployee").post(verifyTokenMiddleware, createEmployee);
 authRouter.route("/admin/token").post(generateSuperAdminToken);
+authRouter.route("/token").get(verifyTokenMiddleware, getToken)
 
 // authRouter.route('/admin/signup').post(adminSignup)
 
