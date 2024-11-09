@@ -61,10 +61,6 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
-  activeStatus: {
-    type: Boolean,
-    default: true
-  }
 }, {timestamps: true});
 
 const usersModel = new mongoose.model("user", userSchema);
