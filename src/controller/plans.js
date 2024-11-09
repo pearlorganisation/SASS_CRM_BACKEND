@@ -16,15 +16,25 @@ export const addPlan = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Validate required fields
-  if (!planName || !price || !planExpiry || !employeesCount || !contactUploadLimit) {
-    return res.status(400).json({ status: false, message: "Incomplete form inputs" });
+  if (
+    !planName ||
+    !price ||
+    !planExpiry ||
+    !employeesCount ||
+    !contactUploadLimit
+  ) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Incomplete form inputs" });
   }
 
   // Check if the plan with the same name already exists
   const isPlanExist = await planModel.findOne({ planName });
 
   if (isPlanExist) {
-    return res.status(400).json({ status: false, message: "Plan with this name already exists" });
+    return res
+      .status(400)
+      .json({ status: false, message: "Plan with this name already exists" });
   }
 
   // Create the new plan
@@ -40,7 +50,11 @@ export const addPlan = asyncHandler(async (req, res) => {
     employeeActivity,
   });
 
-  res.status(201).json({ status: true, message: "Plan Created Successfully", plan: newPlan });
+  res.status(201).json({
+    status: true,
+    message: "Plan Created Successfully",
+    plan: newPlan,
+  });
 });
 
 //get all plans
@@ -63,11 +77,10 @@ export const getPlan = asyncHandler(async (req, res) => {
   res.status(200).json({ status: true, plan });
 });
 
-
 //update plan
 
 export const updatePlan = asyncHandler(async (req, res) => {
-  const { planId } = req.params; // Assuming you're using planId from the URL
+  const { id } = req.params; // Assuming you're using planId from the URL
   const {
     planName,
     price,
@@ -81,7 +94,7 @@ export const updatePlan = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Find the existing plan
-  const plan = await planModel.findById(planId);
+  const plan = await planModel.findById(id);
 
   if (!plan) {
     return res.status(404).json({ status: false, message: "Plan not found" });
@@ -91,17 +104,27 @@ export const updatePlan = asyncHandler(async (req, res) => {
   plan.planName = planName !== undefined ? planName : plan.planName;
   plan.price = price !== undefined ? price : plan.price;
   plan.planExpiry = planExpiry !== undefined ? planExpiry : plan.planExpiry;
-  plan.employeesCount = employeesCount !== undefined ? employeesCount : plan.employeesCount;
-  plan.contactUploadLimit = contactUploadLimit !== undefined ? contactUploadLimit : plan.contactUploadLimit;
-  plan.employeeReminder = employeeReminder !== undefined ? employeeReminder : plan.employeeReminder;
-  plan.purchaseHistory = purchaseHistory !== undefined ? purchaseHistory : plan.purchaseHistory;
-  plan.employeeStatus = employeeStatus !== undefined ? employeeStatus : plan.employeeStatus;
-  plan.employeeActivity = employeeActivity !== undefined ? employeeActivity : plan.employeeActivity;
+  plan.employeesCount =
+    employeesCount !== undefined ? employeesCount : plan.employeesCount;
+  plan.contactUploadLimit =
+    contactUploadLimit !== undefined
+      ? contactUploadLimit
+      : plan.contactUploadLimit;
+  plan.employeeReminder =
+    employeeReminder !== undefined ? employeeReminder : plan.employeeReminder;
+  plan.purchaseHistory =
+    purchaseHistory !== undefined ? purchaseHistory : plan.purchaseHistory;
+  plan.employeeStatus =
+    employeeStatus !== undefined ? employeeStatus : plan.employeeStatus;
+  plan.employeeActivity =
+    employeeActivity !== undefined ? employeeActivity : plan.employeeActivity;
 
   // Save the updated plan
   await plan.save();
 
-  res.status(200).json({ status: true, message: "Plan updated successfully", plan });
+  res
+    .status(200)
+    .json({ status: true, message: "Plan updated successfully", plan });
 });
 
 //delete plan api

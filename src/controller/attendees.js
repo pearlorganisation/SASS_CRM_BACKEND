@@ -76,21 +76,13 @@ export const getAttendees = asyncHandler(async (req, res) => {
 
   //pagination
   const page = Number(req?.params?.page) || 1;
-  const limit = Number(req?.query?.limit) || 30;
+  const limit = Number(req?.query?.limit) || 10;
   const skip = (page - 1) * limit;
   let totalPages = 1;
   console.log(page,limit,skip);
 
-  const totalAttendees = await attendeesModel.countDocuments(pipeline);
-  console.log(totalAttendees)
-  totalPages = Math.ceil(totalAttendees / limit);
-
-  // Aggregation pipeline to join user data and match on email and recordType
-  const result = await attendeesModel.aggregate([
+  const totalAttendees = await attendeesModel.aggregate([
     { $match: pipeline },
-    { $sort: { email: 1 } },
-    { $skip: skip },
-    { $limit: limit },
     {
       $lookup: {
         from: "users", // Collection name for users
@@ -123,13 +115,57 @@ export const getAttendees = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: "$email",
+      },
+    },
+  ]);
+  console.log(totalAttendees.length,"totalAttendees");
+  totalPages = Math.ceil(totalAttendees.length / limit);
+  console.log('ta', totalPages)
+
+  const result = await attendeesModel.aggregate([
+    { $match: pipeline },
+    { $sort: { email: 1 } },
+    {
+      $lookup: {
+        from: "users", // Collection name for users
+        let: { attendeeEmail: "$email", attendeeRecordType: "$recordType" }, // Fields from attendee
+        pipeline: [
+          { $unwind: "$assignments" }, // Unwind assignments array
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$assignments.email", "$$attendeeEmail"] },
+                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] },
+                ],
+              },
+            },
+          },
+          { $project: { userName: 1 } }, // Project only userName
+        ],
+        as: "employeeData", // Output field
+      },
+    },
+    {
+      $addFields: {
+        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] }, // Extract employee name
+      },
+    },
+    { $project: { employeeData: 0 } }, 
+
+    
+    {
+      $group: {
+        _id: "$email",
         records: {
           $push: "$$ROOT",
         },
       },
     },
-    // sorting the data for _id which is email in ascending order..
-    { $sort: { _id: 1 } },
+    { $skip: skip },
+    { $limit: limit },
+    
+
   ]);
 
   if (result.length > 0) {
@@ -402,7 +438,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-  console.log(req?.query?.employeeId);
+  // console.log(req,"req");
   let employeeId;
 
   if (ROLES?.ADMIN === req?.role && req?.query?.employeeId) {

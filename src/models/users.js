@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
   password: {
     type: String,
     required: [true, "password is required"],
@@ -57,10 +61,6 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
-  activeStatus: {
-    type: Boolean,
-    default: true
-  }
 }, {timestamps: true});
 
 const usersModel = new mongoose.model("user", userSchema);

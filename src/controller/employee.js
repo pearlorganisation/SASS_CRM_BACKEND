@@ -22,3 +22,43 @@ export const getEmployees = asyncHandler(async (req, res) => {
   const result = await usersModel.find({ adminId: adminId }).populate("role");
   res.status(200).json({ status: true, data: result });
 });
+
+
+export const toggleEmployeeStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(req?.role)) {
+    return res.status(403).json({
+      status: false,
+      message: "Not authorized to change employee status",
+    });
+  }
+
+  const employee = await usersModel.findById(id);
+  if (!employee) {
+    return res.status(404).json({
+      status: false,
+      message: "Employee not found",
+    });
+  }
+
+  if (req.role === ROLES.ADMIN && employee.adminId.toString() !== req.id) {
+    return res.status(403).json({
+      status: false,
+      message: "Not authorized to change status of this employee",
+    });
+  }
+
+  employee.isActive = !employee.isActive;
+  await employee.save();
+
+  const result = await usersModel.find({ adminId: employee.adminId }).populate("role");
+
+  res.status(200).json({
+    status: true,
+    message: `Employee has been ${employee.isActive ? 'activated' : 'deactivated'} successfully`,
+    data: result,
+  });
+});
+
+
