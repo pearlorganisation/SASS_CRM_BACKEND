@@ -438,7 +438,7 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-  console.log(req?.query?.employeeId);
+  // console.log(req,"req");
   let employeeId;
 
   if (ROLES?.ADMIN === req?.role && req?.query?.employeeId) {
