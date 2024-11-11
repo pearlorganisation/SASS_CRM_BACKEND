@@ -38,19 +38,22 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "roles",
     required: [true, "role is required"],
-    // default: ROLES.ADMIN
   },
-  assignments : [
+  pabblyToken: {
+    type: String,
+    required: false,
+  },
+  assignments: [
     {
       email: {
         type: String,
-        unique: true
+        unique: true,
       },
       recordType: {
         type: String,
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
 
 const usersModel = new mongoose.model("user", userSchema);

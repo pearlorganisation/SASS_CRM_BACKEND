@@ -20,14 +20,30 @@ export const getProducts = asyncHandler(async (req, res) => {
     adminId = id;
   }
 
-  const data = await productModel.find({
-    adminId: new mongoose.Types.ObjectId(adminId),
-  });
+  const limit = parseInt(req?.query?.limit) || 10;
+  const page = parseInt(req?.query?.page) || 1;
+  const skip = (page - 1) * limit;
 
-  if(data?.length > 0){
-    res.status(200).json({ status: true, data });
+  const data = await productModel
+    .find({ adminId: new mongoose.Types.ObjectId(adminId) })
+    .skip(skip)
+    .limit(limit);
+
+  if (data?.length > 0) {
+    const totalItems = await productModel.countDocuments({
+      adminId: new mongoose.Types.ObjectId(adminId),
+    });
+    res.status(200).json({
+      status: true,
+      data,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+      },
+    });
   } else {
-    res.status(500).json({status: false, message: 'No products found'})
+    res.status(404).json({ status: false, message: "No products found" });
   }
-
 });

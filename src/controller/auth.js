@@ -175,10 +175,11 @@ export const signup = asyncHandler(async (req, res) => {
   const { password, userName, phone, email } = req?.body;
 
   if (!password || !userName || !email) {
-    res.status(500).json({ status: false, message: "Incomplete form inputs" });
+    res.status(500).json({ status: false, message: "Incomplete inputs" });
   }
 
   const isUserExists = await usersModel.findOne({ email });
+
   if (isUserExists) {
     res.status(404).json({ status: false, message: "User already Exists" });
     return;
@@ -186,18 +187,39 @@ export const signup = asyncHandler(async (req, res) => {
 
   const hashPassword = await bcrypt.hash(password, 10);
 
+  const role = ROLES?.ADMIN;
+
   let payload = {
     userName,
     email,
     password: hashPassword,
     phone,
+    role: role,
   };
+
   const savedUser = await usersModel.create(payload);
+
+  //generate token and update
+
+  const token = jwt.sign(
+    {
+      id: savedUser?._id,
+      rId: savedUser?.role,
+    },
+    process.env.PABBLY_CLIENT_ACCESS_TOKEN_SECRET
+  );
+
+  const user = await usersModel.findOneAndUpdate(
+    { _id: savedUser?.id },
+    {
+      pabblyToken: token,
+    }
+  );
 
   res.status(200).json({
     status: "SUCCESS",
     message: "User created successfully",
-    data: savedUser,
+    data: user,
   });
 });
 
@@ -207,28 +229,28 @@ export const createEmployee = asyncHandler(async (req, res) => {
   const { password, userName, phone, email, selectedRole, adminId } = req?.body;
   let role, plan;
 
-
   if (!password && !userName && !email && !adminId && !selectedRole) {
     res.status(500).json({ status: false, message: "Incomplete form inputs" });
   }
   // console.log(selectedRole)
 
-
   if (adminId && req?.role === ROLES.ADMIN) {
     // console.log(selectedRole)
     role = ROLES[`${selectedRole}`];
   } else {
-    res.status(500).json({status: false, message: "Only Admin level roles are allowed to create employees."})
+    res.status(500).json({
+      status: false,
+      message: "Only Admin level roles are allowed to create employees.",
+    });
   }
 
-  console.log(role)
+  console.log(role);
 
   if (req?.plan) {
     plan = await planModel.findById(req?.plan);
   } else {
     res.status(500).json({ status: false, message: "No Plan Found" });
   }
-
 
   const isUserExists = await usersModel.findOne({ email });
   if (isUserExists) {
@@ -240,12 +262,12 @@ export const createEmployee = asyncHandler(async (req, res) => {
 
   const employeeCount = await usersModel.countDocuments({ adminId: adminId });
 
-  console.log(employeeCount, plan.employeesCount);
+  // console.log(employeeCount, plan.employeesCount);
   // return;
   if (employeeCount < plan.employeesCount) {
     const hashPassword = await bcrypt.hash(password, 10);
 
-    console.log(role,"role")
+    // console.log(role,"role")
 
     const savedUser = await usersModel.create({
       userName,
@@ -270,19 +292,20 @@ export const createEmployee = asyncHandler(async (req, res) => {
 });
 
 export const deleteEmployee = asyncHandler(async (req, res) => {
-  const {employeeId } = req?.query;
-
+  const { employeeId } = req?.query;
 
   if (!employeeId) {
     res.status(500).json({ status: false, message: "Incomplete form inputs" });
   }
 
   const adminId = req?.id;
+  const role = req?.role;
 
-  if (adminId && req?.role === ROLES.ADMIN) {
-    role = ROLES[`${selectedRole}`];
-  } else {
-    res.status(500).json({status: false, message: "Only Admin level roles are allowed to create employees."})
+  if (role !== ROLES.ADMIN) {
+    res.status(500).json({
+      status: false,
+      message: "Only Admin level roles are allowed to delete employees.",
+    });
   }
 
   const isMyAdmin = await usersModel.findOne({ _id: userId, adminId: adminId });
@@ -290,11 +313,12 @@ export const deleteEmployee = asyncHandler(async (req, res) => {
   if (!isMyAdmin) {
     return res.status(500).json({
       status: false,
-      message: "Only employee's admin is allowed to assign attendees",
+      message: "Only user's admin is allowed to delete them!",
     });
   }
 
-})
+  //write delete employee logic here
+});
 
 // @desc - to fetch the users data
 // @route - POST /auth/logout
@@ -329,3 +353,16 @@ export const logout = asyncHandler(async (req, res) => {
 //     data: savedUser,
 //   });
 // });
+
+export const generateSuperAdminToken = asyncHandler(async (req, res) => {
+  const { _id, role } = req?.body;
+  const token = jwt.sign(
+    {
+      id: _id,
+      rId: role,
+    },
+    process.env.PABBLY_ACCESS_TOKEN_SECRET
+  );
+
+  res.status(200).send(token);
+});

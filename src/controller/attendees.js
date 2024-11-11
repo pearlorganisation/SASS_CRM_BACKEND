@@ -19,10 +19,10 @@ export const addAttendees = asyncHandler(async (req, res) => {
     });
   }
 
-  const data = req.body;
-  const csvName = req?.body[0].csvName;
+  const data = req?.body;
+  const csvName = req?.body[0]?.csvName;
   const date = new Date();
-  const randomString = date.getTime();
+  const randomString = date?.getTime();
 
   data.forEach((e) => {
     e.csvId = `${csvName}${randomString}`;
@@ -36,21 +36,64 @@ export const addAttendees = asyncHandler(async (req, res) => {
     .json({ status: true, message: "Attendees Added successfully", result });
 });
 
+export const updateAttendees = asyncHandler(async (req, res) => {
+  if (req?.role !== ROLES.ADMIN) {
+    return res.status(403).json({
+      status: false,
+      message: "Only admin is allowed to assign attendees",
+    });
+  }
+
+  const { data, csvId } = req?.body;
+
+  if (!Array.isArray(data) || !csvId) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid data or csvId",
+    });
+  }
+
+  try {
+    const updatePromises = data.map(async (attendee) => {
+      console.log("attendee",attendee);
+      const { email, ...rest } = attendee;
+      // Update based on `csvId` and `email` if email is provided
+      
+      return await attendeesModel.replaceOne(
+        { csvId, email },
+        { $set: {...rest} }
+      );
+    });
+   
+
+    
+
+    const result = await Promise.all(updatePromises);
+
+    
+
+    res.status(200).json({
+      status: true,
+      message: "Attendees updated successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("Error updating attendees:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to update attendees",
+    });
+  }
+});
+
+
 export const getAttendees = asyncHandler(async (req, res) => {
   let { recordType } = req?.query;
 
   if (!recordType) recordType = "sales";
 
   let pipeline = { recordType };
-
-  let adminId = req.id;
-
-  if ([ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
-    const user = await usersModel.findOne({ _id: req?.id });
-    adminId = user?.adminId;
-  }
-
-  addFilter(pipeline, "adminId", new mongoose.Types.ObjectId(adminId));
+  addFilter(pipeline, "adminId", req?.adminId);
 
   //filtering
   if (req?.query) {
@@ -68,6 +111,7 @@ export const getAttendees = asyncHandler(async (req, res) => {
     if (gender) {
       addFilter(pipeline, "gender", gender);
     }
+
     if (location) {
       addFilter(pipeline, "location", location);
     }
@@ -82,15 +126,17 @@ export const getAttendees = asyncHandler(async (req, res) => {
   if (req?.body?.csvId) addFilter(pipeline, "csvId", req?.body?.csvId);
 
   //pagination
-  const page = req?.params?.page || 1;
-  const limit = 25;
+  const page = Number(req?.params?.page) || 1;
+  const limit = Number(req?.query?.limit) || 30;
   const skip = (page - 1) * limit;
   let totalPages = 1;
+  console.log(page,limit,skip);
 
   const totalAttendees = await attendeesModel.countDocuments(pipeline);
+  console.log(totalAttendees)
   totalPages = Math.ceil(totalAttendees / limit);
 
-  // Aggregate pipeline to join user data and match on email and recordType
+  // Aggregation pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
     { $sort: { email: 1 } },
@@ -124,27 +170,16 @@ export const getAttendees = asyncHandler(async (req, res) => {
     },
     { $project: { employeeData: 0 } }, // Exclude employeeData array from result
 
+    //grouping attendee records as per unique email
     {
       $group: {
         _id: "$email",
         records: {
-          $push: {
-            _id: "$_id",
-            firstName: "$firstName",
-            lastName: "$lastName",
-            phone: "$phone",
-            employeeName: "$employeeName",
-            csvName: "$csvName",
-            csvId: "$csvId",
-            recordType: "$recordType",
-            date: "$date",
-            timeInSession: "$timeInSession",
-            createdAt: "$createdAt",
-            updatedAt: "$updatedAt",
-          },
+          $push: "$$ROOT",
         },
       },
     },
+    // sorting the data for _id which is email in ascending order..
     { $sort: { _id: 1 } },
   ]);
 
@@ -178,56 +213,18 @@ export const getAttendee = asyncHandler(async (req, res) => {
   let pipeline = {
     email: { $regex: new RegExp(`^${email}$`, "i") }, // Case-insensitive email search
     recordType: recordType,
+    adminId: req?.adminId,
   };
 
   // Aggregate pipeline to join user data and match on email and recordType
   const result = await attendeesModel.aggregate([
     { $match: pipeline },
-    {
-      $lookup: {
-        from: "users", // Collection name for users
-        let: { attendeeEmail: "$email", attendeeRecordType: "$recordType" }, // Fields from attendee
-        pipeline: [
-          { $unwind: "$assignments" }, // Unwind assignments array
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$assignments.email", "$$attendeeEmail"] },
-                  { $eq: ["$assignments.recordType", "$$attendeeRecordType"] },
-                ],
-              },
-            },
-          },
-          { $project: { userName: 1 } }, // Project only userName
-        ],
-        as: "employeeData", // Output field
-      },
-    },
-    {
-      $addFields: {
-        employeeName: { $arrayElemAt: ["$employeeData.userName", 0] }, // Extract employee name
-      },
-    },
-    { $project: { employeeData: 0 } }, // Exclude employeeData array from result
+    { $sort: { createdAt: -1 } },
     {
       $group: {
         _id: "$email",
-        records: {
-          $push: {
-            _id: "$_id",
-            firstName: "$firstName",
-            lastName: "$lastName",
-            phone: "$phone",
-            employeeName: "$employeeName",
-            csvName: "$csvName",
-            csvId: "$csvId",
-            recordType: "$recordType",
-            date: "$date",
-            timeInSession: "$timeInSession",
-            createdAt: "$createdAt",
-            updatedAt: "$updatedAt",
-          },
+        data: {
+          $push: "$$ROOT",
         },
       },
     },
@@ -236,6 +233,33 @@ export const getAttendee = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json({ status: true, message: "data found successfully", data: result });
+});
+
+export const updateAttendee = asyncHandler(async (req, res) => {
+  const { id } = req?.body;
+  const payload = {
+    firstName: req?.body?.firstName,
+    lastName: req?.body?.lastName,
+    phone: req?.body?.phone,
+    gender: req?.body?.gender,
+    location: req?.body?.location,
+  };
+
+  const result = await attendeesModel.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(`${id}`), adminId: req?.adminId },
+    payload,
+    {
+      new: true,
+      fields: { assignments: { $slice: -1 } },
+    }
+  );
+  res
+    .status(200)
+    .json({
+      status: true,
+      message: "Attendee data updated successfully",
+      data: result,
+    });
 });
 
 export const getCsvData = asyncHandler(async (req, res) => {
@@ -296,7 +320,6 @@ export const deleteCsvData = asyncHandler(async (req, res) => {
 
 export const assignAttendees = asyncHandler(async (req, res) => {
   const { userId, attendees } = req?.body; // Assuming attendees is an array of attendee objects with attendeeId and recordType
-  console.log(attendees);
 
   if (req?.role !== ROLES.ADMIN) {
     res.status(500).json({
@@ -430,14 +453,29 @@ export const assignAttendees = asyncHandler(async (req, res) => {
 });
 
 export const getAssignments = asyncHandler(async (req, res) => {
-  if (![ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)) {
-    return res
-      .status(500)
-      .json({ status: false, message: "Not logged in as an employee" });
+  console.log(req?.query?.employeeId);
+  let employeeId;
+
+  if (ROLES?.ADMIN === req?.role && req?.query?.employeeId) {
+    employeeId = new mongoose.Types.ObjectId(`${req?.query?.employeeId}`);
+  } else if (
+    [ROLES.EMPLOYEE_SALES, ROLES.EMPLOYEE_REMINDER].includes(req?.role)
+  ) {
+    employeeId = new mongoose.Types.ObjectId(`${req?.id}`);
+  } else {
+    return res.status(500).json({
+      status: false,
+      message: "Missing EmployeeId or Role not allowed",
+    });
   }
+  //pagination
+  const page = Number(req?.query?.page) || 1;
+  const limit = Number(req?.query?.limit) || 25;
+  const skip = (page - 1) * limit;
+  let totalPages = 1;
+  console.log(page,limit,skip);
 
-  const employeeId = new mongoose.Types.ObjectId(req?.id);
-
+  // Aggregation to get assignments
   const result = await usersModel.aggregate([
     { $match: { _id: employeeId } },
     { $unwind: "$assignments" }, // Unwind the assignments array
@@ -460,7 +498,7 @@ export const getAssignments = asyncHandler(async (req, res) => {
             },
           },
         ],
-        as: "assignmentDetails", // Rename this to avoid confusion
+        as: "assignments",
       },
     },
     {
@@ -469,10 +507,75 @@ export const getAssignments = asyncHandler(async (req, res) => {
         email: { $first: "$email" },
         userName: { $first: "$userName" },
         phone: { $first: "$phone" },
-        assignments: { $push: { $arrayElemAt: ["$assignmentDetails", 0] } }, // Get first matching assignment details
+        assignments: { $push: { $arrayElemAt: ["$assignments", 0] } }, // Getting first matching assignment
       },
     },
+    { $unwind: "$assignments" }, // Unwind assignments array!? lesgooo!
+
+    // grouping the assignments just like we did in getting attendees becuz there are multiple for same email id! -_-
+    {
+      $group: {
+        _id: "$assignments.email",
+        records: {
+          $push: {
+            _id: "$assignments._id",
+            firstName: "$assignments.firstName",
+            lastName: "$assignments.lastName",
+            phone: "$assignments.phone",
+            employeeName: "$assignments.employeeName",
+            leadType: "$assignments.leadType",
+            csvName: "$assignments.csvName",
+            csvId: "$assignments.csvId",
+            recordType: "$assignments.recordType",
+            date: "$assignments.date",
+            timeInSession: "$assignments.timeInSession",
+            createdAt: "$assignments.createdAt",
+            updatedAt: "$assignments.updatedAt",
+          },
+        },
+      },
+    },
+    { $sort: { _id: 1 } },
+    {
+      $group: {
+        _id: null, // Group all results to calculate total count
+        totalCount: { $sum: { $size: "$records" } }, // Count total records
+        results: { $push: "$$ROOT" }, // Push all records into results array
+      },
+    },
+    { $project: { _id: 0, totalCount: 1, results: 1 } }, // Format the output
+    { $unwind: "$results" },
+    { $skip: skip },
+    { $limit: limit },
   ]);
 
-  res.status(200).json({ status: true, data: result });
+  // Return the final output
+  totalPages = result.length > 0 ? Math.ceil(result[0].totalCount / limit) : 1;
+  const paginatedResults = result.map((item) => item.results);
+
+  res.status(200).json({
+    status: true,
+    page,
+    totalPages: totalPages,
+    data: paginatedResults,
+  });
+});
+
+export const updateLeadType = asyncHandler(async (req, res) => {
+  const { leadType, email, recordType } = req?.body;
+
+  const payload = {
+    leadType: leadType,
+  };
+
+  const result = await attendeesModel.updateMany(
+    { email: email, recordType: recordType, adminId: req?.adminId },
+    payload
+  );
+
+  res.status(200).json({
+    status: true,
+    message: "Lead type updated successfully.",
+    data: result,
+  });
 });
