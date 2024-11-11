@@ -51,6 +51,13 @@ export const deleteCustomOption = asyncHandler(async (req, res) => {
 
   const customOption = await customOptionModel.findById(id);
 
+  if (customOption?.adminId.toString() !== req.id) {
+    return res.status(403).json({
+      status: false,
+      message: "Not authorized to delete this custom option",
+    });
+  }
+
   if (!customOption) {
     return res.status(404).json({
       status: false,
@@ -58,7 +65,7 @@ export const deleteCustomOption = asyncHandler(async (req, res) => {
     });
   }
 
-  await customOption.remove();
+  await customOptionModel.findByIdAndDelete(id);
 
   res.status(200).json({
     status: true,
