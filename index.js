@@ -16,6 +16,7 @@ import employeeRouter from "./src/routes/employee.js";
 import globalDataRouter from "./src/routes/globalData.js";
 import customSettingsRouter from "./src/routes/customSettings.js";
 import notesRouter from "./src/routes/notes.js";
+import customOptionRouter from './src/routes/customDropdownOptions.js'
 
 //swagger
 import swaggerUi from "swagger-ui-express";
@@ -122,6 +123,7 @@ app.use("/api/v1/globalData", globalDataRouter);
 app.use("/api/v1/customSettings", customSettingsRouter);
 app.use("/api/v1/notes", notesRouter);
 app.use("/api/v1/userActivity", userActivityRouter);
+app.use("/api/v1/customOptions", customOptionRouter);
 
 
 app.get("/", (req, res) => {
