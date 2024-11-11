@@ -5,7 +5,6 @@ const customDropdownOptionSchema = new mongoose.Schema(
     value: {
       type: String,
       required: true,
-      unique: true,
     },
     label: {
       type: String,
@@ -20,9 +19,9 @@ const customDropdownOptionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const userActivityModel = mongoose.model(
+const customOptionModel = mongoose.model(
   "customOption",
   customDropdownOptionSchema
 );
 
-export default userActivityModel;
+export default customOptionModel;
